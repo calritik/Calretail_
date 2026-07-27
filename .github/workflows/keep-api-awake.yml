@@ -1,0 +1,62 @@
+name: Keep the API awake
+
+# Render's free tier stops a service after ~15 minutes without inbound traffic.
+# Waking it again costs the visitor a container cold start plus rebuilding the
+# in-process result cache — the first click after an idle period feels broken
+# even though nothing is. A request every 10 minutes keeps it running.
+#
+# GitHub Actions is free and unlimited on public repositories, and `schedule`
+# only fires on the repository's default branch, which is where this lives.
+#
+# Two caveats worth knowing rather than discovering:
+#   * GitHub's scheduler is best-effort and genuinely unreliable: the first run
+#     of a new workflow can take 15-30 minutes to appear, and later runs are
+#     regularly late by 5-15 minutes under load. Five minutes is the shortest
+#     interval GitHub accepts, and asking for it means even three consecutive
+#     missed slots still land inside Render's 15-minute idle timer. The job is
+#     seconds of work, so over-asking costs nothing.
+#   * GitHub disables scheduled workflows on a repository with no commits for
+#     60 days. If the API starts sleeping again months from now, re-enable it
+#     from the Actions tab.
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:        # so it can be triggered by hand to verify
+
+concurrency:
+  # A late run must not stack on top of the next scheduled one.
+  group: keep-api-awake
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Ping the health endpoint
+        env:
+          API: https://calretail-console.onrender.com
+        run: |
+          # A stopped instance takes ~50s to come back, and the first request
+          # through can be refused outright while the container boots. Retrying
+          # is the difference between waking the service and reporting it down.
+          for attempt in 1 2 3 4; do
+            start=$(date +%s)
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 120 "$API/health" || echo 000)
+            elapsed=$(( $(date +%s) - start ))
+
+            if [ "$code" = "200" ]; then
+              echo "awake — HTTP $code in ${elapsed}s (attempt $attempt)"
+              exit 0
+            fi
+
+            echo "attempt $attempt: HTTP $code after ${elapsed}s, retrying..."
+            sleep 20
+          done
+
+          echo "::error::API did not answer after 4 attempts"
+          exit 1

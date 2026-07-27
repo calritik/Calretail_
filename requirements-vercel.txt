@@ -1,0 +1,14 @@
+# Dependencies for the Dash console ONLY, deployed to Vercel as a serverless
+# function (see api/index.py and vercel.json).
+#
+# Deliberately not the root requirements.txt. That file carries the backend's
+# scientific stack — pandas, scipy, scikit-learn, xgboost — which measures
+# ~427 MB installed against Vercel's 250 MB function limit. The console imports
+# none of it: an audit of frontend_dash/ turns up exactly three third-party
+# names, and they are the three below.
+#
+# The backend runs on Render; this app reaches it over HTTP through
+# CALRETAIL_API_BASE.
+dash>=3.3.0
+plotly>=5.18.0
+requests>=2.31.0

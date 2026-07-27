@@ -1,0 +1,1058 @@
+/* ==========================================================================
+   CalRetail — design system
+   Sage-green / warm off-white, light-first, right-hand sidebar, 18px cards,
+   staggered entrance, full dark mode. No Tailwind here — the handful of
+   utilities that shell/pages need are defined explicitly at the bottom.
+   ========================================================================== */
+
+:root {
+  --ease-out: cubic-bezier(.22,.61,.36,1);
+  --ease-snap: cubic-bezier(.34,1.36,.64,1);
+
+  /* ink / surfaces */
+  --ink: #25352b;
+  --ink-soft: #3a5442;
+  --navy: #3f6652;       /* "deep sage" — brand-mark & accent gradients */
+  --navy-deep: #243d2f;
+  --slate-bg: #f7f6ef;   /* warm off-white page background */
+  --card-line: #e2e4d7;
+  --surface: #ffffff;
+
+  /* brand ramp */
+  --brand: #5c8f6e;
+  --brand2: #82ae8f;
+  --brand3: #b7d4be;
+
+  /* status */
+  --accent: #c0724a;
+  --accent-ink: #9c5934;
+  --accent-soft: #efd0bc;
+  --warn: #d2a44e;
+  --warn-ink: #8c6a2c;
+  --warn-soft: #f6ead0;
+  --ok: #4c8b63;
+  --ok-ink: #35603f;
+  --ok-soft: #dcefe1;
+
+  /* text on light */
+  --t-90: rgba(37,53,43,.90);
+  --t-70: rgba(37,53,43,.70);
+  --t-62: rgba(37,53,43,.62);
+  --t-55: rgba(37,53,43,.55);
+  --t-45: rgba(37,53,43,.45);
+  --t-38: rgba(37,53,43,.38);
+
+  --shadow-card: 0 1px 2px rgba(30,45,35,.04), 0 8px 24px rgba(30,45,35,.05);
+  --shadow-soft: 0 1px 2px rgba(30,45,35,.04), 0 4px 14px rgba(30,45,35,.05);
+  --shadow-lift: 0 2px 4px rgba(30,45,35,.05), 0 18px 38px rgba(30,45,35,.10);
+
+  /* Console reading width. The content column is centred and capped here so
+     cards keep a comfortable size on ultra-wide monitors instead of stretching
+     across the whole screen. Laptops (≤~1500px) fall under the cap and are
+     unaffected; only very wide displays get the reined-in, centred layout. */
+  --content-max: 1240px;
+
+  /* One gutter value for every grid on the console — card grid, split columns
+     and KPI tiles all breathe on the same rhythm. */
+  --gap: 18px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--slate-bg);
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  /* Tells the engine which palette to draw *native* UI with — number-input spin
+     buttons, scrollbars, focus rings. Without it those stay light-themed on the
+     dark surface, which is why the price-override stepper appeared as a pale
+     control with mis-tinted digits sitting in a near-black field. CSS can't
+     restyle spin buttons; this is the only lever for them. */
+  color-scheme: light;
+}
+
+/* Dash injects these wrappers; make them full-height so the sticky aside works */
+#react-entry-point, #_dash-app-content { min-height: 100vh; }
+
+/* Painted by the inline <head> script before the Dash bundle loads, so a
+   dark-mode reload doesn't flash white while theme.js is still parsing. */
+html[data-boot-theme="dark"] body { background: #080f1d; color: #e8eef9; }
+
+/* ==========================================================================
+   Icons
+
+   dash.html has no SVG elements, so icons are CSS masks over currentColor:
+   crisp at any size, theme-aware for free, and no extra Python dependency.
+   ========================================================================== */
+
+.ic {
+  display: inline-block; flex: none;
+  width: 16px; height: 16px;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: center;  mask-position: center;
+  -webkit-mask-size: contain;     mask-size: contain;
+}
+
+
+.ic-home { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 10.5L12 3l9 7.5'/%3E%3Cpath d='M5.5 9.8V21h13V9.8'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 10.5L12 3l9 7.5'/%3E%3Cpath d='M5.5 9.8V21h13V9.8'/%3E%3C/svg%3E"); }
+
+.ic-cx { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='8' r='3.6'/%3E%3Cpath d='M4.5 20.5a7.5 7.5 0 0 1 15 0'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='8' r='3.6'/%3E%3Cpath d='M4.5 20.5a7.5 7.5 0 0 1 15 0'/%3E%3C/svg%3E"); }
+
+.ic-merch { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 7h18l-1.4 12.2a2 2 0 0 1-2 1.8H6.4a2 2 0 0 1-2-1.8z'/%3E%3Cpath d='M8.5 10V6.2a3.5 3.5 0 0 1 7 0V10'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 7h18l-1.4 12.2a2 2 0 0 1-2 1.8H6.4a2 2 0 0 1-2-1.8z'/%3E%3Cpath d='M8.5 10V6.2a3.5 3.5 0 0 1 7 0V10'/%3E%3C/svg%3E"); }
+
+.ic-ops { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 7h11v9H3z'/%3E%3Cpath d='M14 10h4l3 3v3h-7z'/%3E%3Ccircle cx='7' cy='18.4' r='1.7'/%3E%3Ccircle cx='17.4' cy='18.4' r='1.7'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 7h11v9H3z'/%3E%3Cpath d='M14 10h4l3 3v3h-7z'/%3E%3Ccircle cx='7' cy='18.4' r='1.7'/%3E%3Ccircle cx='17.4' cy='18.4' r='1.7'/%3E%3C/svg%3E"); }
+
+.ic-support { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 13v-1a8 8 0 0 1 16 0v1'/%3E%3Crect x='2.4' y='12.2' width='3.6' height='6' rx='1.6'/%3E%3Crect x='18' y='12.2' width='3.6' height='6' rx='1.6'/%3E%3Cpath d='M18 18.6a4 4 0 0 1-4 3'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 13v-1a8 8 0 0 1 16 0v1'/%3E%3Crect x='2.4' y='12.2' width='3.6' height='6' rx='1.6'/%3E%3Crect x='18' y='12.2' width='3.6' height='6' rx='1.6'/%3E%3Cpath d='M18 18.6a4 4 0 0 1-4 3'/%3E%3C/svg%3E"); }
+
+.ic-monet { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='8.6'/%3E%3Cpath d='M12 7.2v9.6'/%3E%3Cpath d='M14.6 9.4a2.8 2.8 0 0 0-2.6-1.4c-1.6 0-2.6.9-2.6 2.1 0 2.9 5.4 1.6 5.4 4.3 0 1.3-1.1 2.2-2.8 2.2a3 3 0 0 1-2.7-1.5'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='8.6'/%3E%3Cpath d='M12 7.2v9.6'/%3E%3Cpath d='M14.6 9.4a2.8 2.8 0 0 0-2.6-1.4c-1.6 0-2.6.9-2.6 2.1 0 2.9 5.4 1.6 5.4 4.3 0 1.3-1.1 2.2-2.8 2.2a3 3 0 0 1-2.7-1.5'/%3E%3C/svg%3E"); }
+
+.ic-assistant { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Crect x='3.5' y='7.5' width='17' height='12' rx='3.2'/%3E%3Cpath d='M12 3.4v4.1'/%3E%3Ccircle cx='9' cy='13.4' r='1.2'/%3E%3Ccircle cx='15' cy='13.4' r='1.2'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Crect x='3.5' y='7.5' width='17' height='12' rx='3.2'/%3E%3Cpath d='M12 3.4v4.1'/%3E%3Ccircle cx='9' cy='13.4' r='1.2'/%3E%3Ccircle cx='15' cy='13.4' r='1.2'/%3E%3C/svg%3E"); }
+
+.ic-sun { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='4.2'/%3E%3Cpath d='M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8l1.8-1.8M18 6l1.8-1.8'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='4.2'/%3E%3Cpath d='M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8l1.8-1.8M18 6l1.8-1.8'/%3E%3C/svg%3E"); }
+
+.ic-moon { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'%3E%3Cpath d='M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z'/%3E%3C/svg%3E"); mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'%3E%3Cpath d='M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z'/%3E%3C/svg%3E"); }
+
+/* ==========================================================================
+   App shell — main content left, sidebar right (mirrors Industrial-AI)
+   ========================================================================== */
+
+.app-shell { min-height: 100vh; display: flex; }
+
+.main-col { flex: 1; min-width: 0; }
+
+.page-head { padding: 40px 40px 24px; max-width: var(--content-max); margin-inline: auto; }
+.page-head-row {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 24px; flex-wrap: wrap;
+}
+.eyebrow {
+  font-size: 12px; text-transform: uppercase; letter-spacing: .18em;
+  color: rgba(92,143,110,.70); font-weight: 600;
+}
+.page-title {
+  margin: 4px 0 0;
+  font-size: 40px; line-height: 1.08; font-weight: 800;
+  letter-spacing: -.02em; color: var(--ink);
+}
+.page-subtitle {
+  margin: 8px 0 0; font-size: 14px; color: var(--t-55); max-width: 42rem;
+}
+.title-swap { animation: titleIn .5s var(--ease-out) both; }
+@keyframes titleIn {
+  from { opacity: 0; transform: translateY(8px); letter-spacing: -.01em; }
+  to   { opacity: 1; transform: translateY(0);  letter-spacing: -.02em; }
+}
+
+.module-view { padding: 16px 40px 56px; max-width: var(--content-max); margin-inline: auto; }
+
+/* staggered entrance for every direct child of a module view */
+.module-enter > * {
+  opacity: 0; transform: translateY(14px);
+  animation: fadeUp .55s var(--ease-out) forwards;
+}
+.module-enter > *:nth-child(1) { animation-delay: .02s; }
+.module-enter > *:nth-child(2) { animation-delay: .07s; }
+.module-enter > *:nth-child(3) { animation-delay: .12s; }
+.module-enter > *:nth-child(4) { animation-delay: .17s; }
+.module-enter > *:nth-child(5) { animation-delay: .22s; }
+.module-enter > *:nth-child(6) { animation-delay: .27s; }
+.module-enter > *:nth-child(7) { animation-delay: .32s; }
+.module-enter > *:nth-child(8) { animation-delay: .37s; }
+@keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+/* A grid is a layout wrapper, not a thing to animate — pass the stagger through
+   to the cards inside it, otherwise all six fade in as one block. */
+.module-enter > .grid-2,
+.module-enter > .grid-3 { opacity: 1; transform: none; animation: none; }
+.module-enter > .grid-2 > *,
+.module-enter > .grid-3 > * {
+  opacity: 0; transform: translateY(14px);
+  animation: fadeUp .55s var(--ease-out) forwards;
+}
+.module-enter > .grid-2 > *:nth-child(1), .module-enter > .grid-3 > *:nth-child(1) { animation-delay: .04s; }
+.module-enter > .grid-2 > *:nth-child(2), .module-enter > .grid-3 > *:nth-child(2) { animation-delay: .10s; }
+.module-enter > .grid-2 > *:nth-child(3), .module-enter > .grid-3 > *:nth-child(3) { animation-delay: .16s; }
+.module-enter > .grid-2 > *:nth-child(4), .module-enter > .grid-3 > *:nth-child(4) { animation-delay: .22s; }
+.module-enter > .grid-2 > *:nth-child(5), .module-enter > .grid-3 > *:nth-child(5) { animation-delay: .28s; }
+.module-enter > .grid-2 > *:nth-child(6), .module-enter > .grid-3 > *:nth-child(6) { animation-delay: .34s; }
+.module-enter > .grid-2 > *:nth-child(n+7) { animation-delay: .40s; }
+
+/* ==========================================================================
+   Sidebar (right)
+   ========================================================================== */
+
+.sidebar {
+  position: sticky; top: 0; height: 100vh; width: 268px; flex-shrink: 0;
+  border-left: 1px solid var(--card-line);
+  background: rgba(255,255,255,.70);
+  backdrop-filter: blur(6px);
+  display: flex; flex-direction: column;
+  z-index: 30;
+}
+.sidebar-brand {
+  padding: 30px 22px 22px; border-bottom: 1px solid var(--card-line);
+  display: flex; align-items: center; gap: 10px;
+}
+.brand-mark {
+  width: 38px; height: 38px; border-radius: 12px; flex: none;
+  background: linear-gradient(135deg, var(--brand), var(--navy-deep));
+  color: #fff; display: grid; place-items: center;
+  font-weight: 800; font-size: 15px; letter-spacing: -.02em;
+  box-shadow: 0 4px 12px rgba(92,143,110,.30);
+}
+.brand-name { font-size: 14px; font-weight: 700; line-height: 1.2; }
+.brand-sub  { font-size: 11px; color: var(--t-55); }
+
+.nav-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 12px; }
+.nav-scroll::-webkit-scrollbar { width: 6px; }
+.nav-scroll::-webkit-scrollbar-thumb { background: #d3d8c7; border-radius: 999px; }
+
+.nav-heading {
+  font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--t-38); padding: 4px 12px 8px;
+}
+
+.nav-btn {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; margin-bottom: 4px;
+  border-radius: 12px; border: 1px solid transparent;
+  font-size: 13.5px; font-weight: 500; color: var(--t-62);
+  cursor: pointer; text-decoration: none; width: 100%; text-align: left;
+  transition: background .25s var(--ease-out), color .25s var(--ease-out);
+}
+.nav-btn:hover { background: #eef2ea; color: var(--ink); }
+.nav-ic {
+  width: 30px; height: 30px; border-radius: 9px; flex: none;
+  background: #eef2ea; color: var(--brand);
+  display: grid; place-items: center;
+  transition: background .25s var(--ease-out), color .25s var(--ease-out), box-shadow .25s var(--ease-out);
+}
+.nav-ic svg { width: 16px; height: 16px; }
+.nav-btn:hover .nav-ic { background: #e2ebf8; }
+.nav-txt { flex: 1; min-width: 0; }
+.nav-index {
+  display: block; font-size: 10.5px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .12em; color: var(--t-45);
+}
+.nav-label { display: block; line-height: 1.25; }
+.nav-caret {
+  flex: none; color: rgba(37,53,43,.25); font-size: 16px; font-weight: 700;
+  opacity: 0; transform: translateX(-4px);
+  transition: opacity .25s var(--ease-out), transform .25s var(--ease-out), color .25s;
+}
+.nav-btn:hover .nav-caret { opacity: 1; transform: none; }
+
+.nav-btn.active {
+  background: linear-gradient(180deg, #ffffff 0%, #f8faf5 100%);
+  color: var(--ink); font-weight: 700;
+  border-color: var(--card-line);
+  box-shadow: 0 1px 2px rgba(30,45,35,.04), 0 6px 18px rgba(30,45,35,.06);
+}
+.nav-btn.active .nav-index { color: var(--brand); }
+.nav-btn.active .nav-ic {
+  background: linear-gradient(180deg, var(--brand2), var(--navy)); color: #fff;
+  box-shadow: 0 4px 12px rgba(92,143,110,.32);
+}
+.nav-btn.active .nav-caret { opacity: 1; transform: none; color: var(--brand); }
+
+/* Live-status dot — used inline on the home page's "Backend" KPI tile rather
+   than in a standalone sidebar box, which just duplicated that same KPI. */
+.status-dot {
+  position: relative; display: inline-block; flex: none;
+  width: 8px; height: 8px; border-radius: 999px;
+  background: var(--ok);
+  box-shadow: 0 0 0 3px rgba(76,139,99,.30);
+}
+.status-dot::after {
+  content: ""; position: absolute; inset: 0; border-radius: 999px;
+  background: inherit; animation: statusPulse 2.2s ease-out infinite;
+}
+.status-dot.down { background: var(--accent); box-shadow: 0 0 0 3px rgba(192,114,74,.30); }
+@keyframes statusPulse {
+  0%   { transform: scale(1);   opacity: .7; }
+  100% { transform: scale(2.6); opacity: 0;  }
+}
+
+/* theme toggle */
+.theme-btn {
+  width: 36px; height: 36px; border-radius: 999px; flex: none;
+  border: 1px solid var(--card-line); background: #fff;
+  color: var(--t-70); display: grid; place-items: center; cursor: pointer;
+  box-shadow: var(--shadow-soft);
+  transition: background .2s, color .2s, border-color .2s;
+}
+.theme-btn:hover { background: var(--slate-bg); color: var(--ink); }
+.theme-btn svg { width: 16px; height: 16px; }
+
+/* only one glyph is ever visible — the other is swapped in by body.dark */
+.ic-moon { display: none; }
+body.dark .ic-sun { display: none; }
+body.dark .ic-moon { display: block; }
+
+/* ==========================================================================
+   Cards
+   ========================================================================== */
+
+.card {
+  position: relative; overflow: visible;
+  background: var(--surface);
+  border: 1px solid var(--card-line);
+  border-radius: 18px;
+  box-shadow: var(--shadow-card);
+  transition: transform .35s var(--ease-out), box-shadow .35s var(--ease-out), border-color .25s var(--ease-out);
+  display: flex; flex-direction: column;
+  /* Makes the card a query container so its own contents can respond to how
+     wide *the card* is, not how wide the window is. A card in a half-width
+     column and the same card spanning the full grid get different internal
+     layouts without either one having to know the viewport. See .card-split
+     and .kpi-grid below. Browsers without @container simply keep the
+     single-column defaults — the layout degrades, it never breaks. */
+  container-type: inline-size;
+  container-name: card;
+}
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lift);
+  border-color: #d6dfee;
+}
+.card-title {
+  font-weight: 700; font-size: 15.5px; color: var(--ink);
+  padding: 18px 20px 8px;
+}
+.card-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 8px 10px; flex-wrap: wrap; padding-right: 26px;
+}
+.card-head > span:first-child {
+  line-height: 1.25; flex: 1 1 auto; min-width: 0;
+  overflow-wrap: break-word;
+}
+.card-pad { padding: 0 20px 18px; flex: 1; min-height: 0; }
+/* margin-top:auto keeps the caption pinned to the bottom in the one place a
+   card is taller than its content — a .card-solo with a fixed max-width. */
+.card-caption {
+  font-size: 12.5px; color: var(--t-62); padding: 0 20px 18px; line-height: 1.42;
+  margin-top: auto;
+}
+.card-sub {
+  font-size: 11px; font-weight: 600; color: var(--t-45);
+  text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px;
+  overflow-wrap: break-word;
+}
+
+/* ── Two-column card body ────────────────────────────────────────────────────
+   A full-width card carrying KPIs + a chart + two tables runs well past a
+   screen when everything is stacked, and the reader loses the top of the card
+   before reaching the bottom of it. .card-split lays that same content out as
+   two columns *inside* the card, so a tall card becomes a wide one.
+
+   It's a container query, not a media query, on purpose: the split turns on
+   when the CARD is wide enough to hold two readable columns. A card in a
+   half-width grid column stays single-column at every viewport size; the same
+   markup spanning the full grid splits. Pages never have to know which. */
+.card-split {
+  display: grid; grid-template-columns: minmax(0, 1fr);
+  gap: var(--gap); align-items: start;
+}
+.card-split > * { min-width: 0; }
+
+@container card (min-width: 680px) {
+  .card-split { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Uneven splits, for when one side is a chart and the other a stat list. */
+  .card-split.split-wide-left  { grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); }
+  .card-split.split-wide-right { grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr); }
+}
+
+/* A hairline between the two columns reads as one card divided, rather than as
+   two cards that lost their borders. Only drawn once the split is actually on. */
+@container card (min-width: 680px) {
+  .card-split.split-ruled > *:nth-child(2) {
+    border-left: 1px solid var(--card-line);
+    padding-left: var(--gap);
+  }
+}
+
+/* "i" info affordance pinned top-right */
+.info-corner { position: absolute; top: 16px; right: 16px; z-index: 6; }
+.info-ic {
+  width: 19px; height: 19px; flex: none;
+  border-radius: 999px; border: 1px solid #cdd9c8;
+  background: #f4f7fc; color: #5a6b86;
+  font: 700 italic 11px/1 Georgia, "Times New Roman", serif;
+  display: inline-grid; place-items: center; cursor: help; position: relative;
+  transition: background .2s var(--ease-out), color .2s var(--ease-out), border-color .2s var(--ease-out);
+}
+.info-ic:hover { background: var(--brand); color: #fff; border-color: var(--brand); }
+/* Widened from 240px: the longest "how it works" notes (assortment, routing)
+   ran to a dozen lines in a narrow column and spilled off the bottom of the
+   screen. A wider, shorter popover fits on screen without needing to scroll —
+   which it can't, being pointer-events:none. It stays right-anchored, so it
+   opens leftwards from the icon and never crosses the viewport edge. */
+.info-pop {
+  position: absolute; top: calc(100% + 9px); right: -2px;
+  width: min(340px, calc(100vw - 48px));
+  background: var(--ink); color: #e8eef7;
+  font: 500 11.5px/1.55 Inter, ui-sans-serif, system-ui;
+  padding: 12px 14px; border-radius: 11px; text-align: left;
+  overflow-wrap: break-word;
+  box-shadow: 0 12px 34px rgba(37,53,43,.30);
+  opacity: 0; visibility: hidden; transform: translateY(-5px) scale(.98);
+  transform-origin: top right; z-index: 40; pointer-events: none;
+  transition: opacity .2s var(--ease-out), transform .2s var(--ease-out), visibility .2s;
+}
+.info-pop::before {
+  content: ""; position: absolute; top: -5px; right: 8px;
+  width: 11px; height: 11px; background: var(--ink);
+  transform: rotate(45deg); border-radius: 2px;
+}
+.info-ic:hover .info-pop { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+
+/* wave badge */
+.wave {
+  display: inline-block; font-size: 9.5px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 999px;
+  background: #eaf3ec; color: var(--brand);
+}
+.wave.w2 { background: var(--warn-soft); color: var(--warn-ink); }
+.wave.w3 { background: var(--accent-soft); color: var(--accent-ink); }
+
+/* ==========================================================================
+   Pills / bars / stats
+   ========================================================================== */
+
+/* Pills carry short status words most of the time, but some are full sentences
+   ("below margin floor ₹1,240", "at or under market average"). `white-space:
+   nowrap` used to send those straight out of the card, so the pill wraps
+   instead: still one pill, now two lines, nothing clipped. */
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  border-radius: 999px; padding: 4px 10px;
+  font-size: 11px; font-weight: 600; line-height: 1.35;
+  max-width: 100%; overflow-wrap: break-word; text-align: left;
+}
+.pill .pdot { width: 7px; height: 7px; border-radius: 999px; flex: none; align-self: center; }
+.pill.high   { background: var(--accent-soft); color: var(--accent-ink); }
+.pill.high .pdot   { background: var(--accent); }
+.pill.medium { background: var(--warn-soft); color: var(--warn-ink); }
+.pill.medium .pdot { background: var(--warn); }
+.pill.low    { background: var(--ok-soft); color: var(--ok-ink); }
+.pill.low .pdot    { background: var(--ok); }
+.pill.info   { background: #eaf3ec; color: var(--brand); }
+.pill.info .pdot   { background: var(--brand2); }
+.pill.neutral { background: #eef2ea; color: var(--t-62); }
+.pill.neutral .pdot { background: #9fc2a8; }
+
+.bar-track {
+  background: #e9eef7; border-radius: 999px; height: 6px; width: 100%; overflow: hidden;
+}
+.bar-fill {
+  height: 100%; border-radius: 999px; transform-origin: left;
+  background: linear-gradient(90deg, var(--brand), var(--brand2));
+  animation: barGrow 1s var(--ease-out) both;
+}
+.bar-fill.ok     { background: linear-gradient(90deg, #4a8442, var(--ok)); }
+.bar-fill.warn   { background: linear-gradient(90deg, #c98f22, var(--warn)); }
+.bar-fill.danger { background: linear-gradient(90deg, var(--accent-ink), var(--accent)); }
+@keyframes barGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* Grid, not flex: the label column can now wrap ("Distance saved vs. baseline")
+   without either stealing the track's width or being cut off, because the three
+   tracks are sized independently. The track keeps a 70px floor so a long label
+   can never collapse the bar into a sliver. */
+.bar-row {
+  display: grid; grid-template-columns: minmax(0, .9fr) minmax(70px, 1.3fr) max-content;
+  align-items: center; gap: 10px; margin-bottom: 9px;
+}
+/* A bar_row() with no label (the aspect-analysis cells) drops the label track
+   entirely rather than reserving blank space for it inside a table cell. */
+.bar-row.nolabel { grid-template-columns: minmax(70px, 1fr) max-content; }
+.bar-row.nolabel > .bar-row-k { display: none; }
+.bar-row-k {
+  font-size: 12px; color: var(--t-62);
+  overflow-wrap: break-word; line-height: 1.35;
+}
+.bar-row-v {
+  font-size: 12px; font-weight: 700; color: var(--ink);
+  min-width: 46px; text-align: right; white-space: nowrap;
+}
+
+/* KPI tiles
+
+   Flex-wrap with grow, not `grid auto-fit`. auto-fit fixes the column count for
+   the whole grid, so four tiles in a card that only fits three per row leave two
+   dead cells on the second row. Flex lets the final row's tiles expand to fill
+   the width instead — no holes at any card width.
+
+   The 178px basis is tuned, not arbitrary. It is small enough that two tiles
+   still pair up in the narrowest place they appear (the ~389px left column of a
+   60/40 split at 1366px, where 190px missed by three pixels and dropped every
+   tile onto its own row) and large enough that a half-width card still lands on
+   a 2x2 block for four KPIs rather than a lopsided 3+1. */
+.kpi-grid { display: flex; flex-wrap: wrap; gap: 12px; }
+.kpi {
+  flex: 1 1 178px; min-width: 0;
+  border: 1px solid var(--card-line); border-radius: 12px;
+  padding: 11px 14px; background: #fbfcfe;
+  transition: border-color .2s var(--ease-out), transform .2s var(--ease-out);
+}
+.kpi:hover { border-color: #cfdbef; transform: translateY(-2px); }
+/* Every line of a tile wraps rather than spilling, so a long value — a routing
+   department, a channel label — stacks inside the tile instead of pushing the
+   row out of the card. `break-word` rather than `anywhere` throughout: both
+   break a genuinely unbreakable string, but `anywhere` also lets the layout
+   shrink an element to one character wide, which turns ordinary words into
+   vertical letter stacks the moment space gets tight. */
+.kpi-k {
+  font-size: 10px; font-weight: 700; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--t-45);
+  overflow-wrap: break-word;
+}
+.kpi-v {
+  font-size: 21px; font-weight: 800; letter-spacing: -.02em;
+  color: var(--ink); margin-top: 3px; line-height: 1.15;
+  overflow-wrap: break-word;
+}
+.kpi-d { font-size: 11px; color: var(--t-55); margin-top: 2px; overflow-wrap: break-word; }
+.kpi-d.up   { color: var(--ok-ink); font-weight: 600; }
+.kpi-d.down { color: var(--accent-ink); font-weight: 600; }
+
+/* stat rows (label / value list) */
+.stat-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 6px 0; border-bottom: 1px solid #f0f3f8;
+  font-size: 12px;
+}
+.stat-row:last-child { border-bottom: none; }
+/* A stat_list longer than ~6 rows (route/omnichannel-style cards) scrolls
+   instead of stretching the card past the fold. */
+.stat-list-scroll { max-height: 220px; overflow-y: auto; }
+.stat-list-scroll::-webkit-scrollbar { width: 6px; }
+.stat-list-scroll::-webkit-scrollbar-thumb { background: #d3d8c7; border-radius: 999px; }
+
+/* A list whose length is the user's choice (top-N recommendations, class
+   members) scrolls inside a fixed well instead of setting the card's height —
+   otherwise asking for 25 results silently makes the card five screens tall. */
+.scroll-pane {
+  max-height: 520px; overflow-y: auto; padding-right: 4px;
+  /* Room for the scrollbar so the last card's border isn't sat on. */
+}
+.scroll-pane::-webkit-scrollbar { width: 6px; }
+.scroll-pane::-webkit-scrollbar-thumb { background: #d3d8c7; border-radius: 999px; }
+body.dark .scroll-pane::-webkit-scrollbar-thumb { background: #2f4a38; }
+/* Neither side is `flex: none`: a long supplier name and a long value both wrap
+   inside their own half instead of one shoving the other out of the row. */
+.stat-k { color: var(--t-62); flex: 1 1 auto; min-width: 0; overflow-wrap: break-word; }
+.stat-v {
+  font-weight: 700; color: var(--ink);
+  flex: 0 1 auto; min-width: 0; text-align: right; overflow-wrap: break-word;
+}
+
+/* ==========================================================================
+   Controls
+   ========================================================================== */
+
+.cp-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+
+.cp-select, .Select-control, .cp-input {
+  border: 1px solid var(--card-line) !important;
+  background: #f7faf5 !important; color: var(--ink) !important;
+  border-radius: 9px !important; font-size: 11.5px; font-weight: 600;
+  min-height: 34px;
+}
+.cp-input {
+  padding: 7px 11px; font-weight: 500; font-size: 12.5px; width: 100%;
+  font-family: inherit; outline: none;
+  transition: border-color .2s, background .2s;
+}
+.cp-input:focus { border-color: var(--brand2) !important; background: #fff !important; }
+
+.cp-go {
+  flex: none; border: none; cursor: pointer;
+  background: var(--ink); color: #fff; border-radius: 9px;
+  padding: 8px 15px; font-size: 11.5px; font-weight: 700; font-family: inherit;
+  transition: background .2s, opacity .2s, transform .1s;
+}
+.cp-go:hover { background: var(--navy); }
+.cp-go:active { transform: scale(.97); }
+.cp-go:disabled { opacity: .55; cursor: default; }
+
+.cp-empty {
+  margin: auto; text-align: center; max-width: 260px; padding: 26px 0;
+  font-size: 12.5px; color: var(--t-45); line-height: 1.55;
+}
+
+/* dcc.Dropdown, Dash 4 DOM.
+   Dash 4 dropped the react-select markup (.Select-control / .Select-value /
+   .Select-menu-outer) for its own .dash-dropdown-* elements, so the old
+   selectors matched nothing and the control kept its default light chrome —
+   invisible white-on-white boxes once dark mode was on. */
+.dash-dropdown-trigger {
+  border: 1px solid var(--card-line) !important;
+  background: #f7faf5 !important;
+  border-radius: 9px !important;
+  min-height: 34px; padding: 4px 10px !important;
+  font-size: 12px; color: var(--ink) !important;
+  transition: border-color .2s, background-color .2s;
+}
+.dash-dropdown-trigger:hover { border-color: #b9c9e6 !important; }
+.dash-dropdown-wrapper:focus-within .dash-dropdown-trigger {
+  border-color: var(--brand2) !important;
+  box-shadow: 0 0 0 3px rgba(63,134,214,.14);
+}
+.dash-dropdown-value, .dash-dropdown-value-item {
+  color: var(--ink) !important; font-size: 12px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dash-dropdown-trigger-icon { color: var(--t-45) !important; }
+
+/* Dash's own inline style caps this popover at max-height:min(200px, ...) and
+   ships its option list with no height of its own, so with a plain
+   `overflow: hidden` here (needed for the rounded corners) a list longer than
+   ~6 rows was silently clipped — not scrollable, just gone, with zero visual
+   cue anything was missing. Making this a column flexbox lets the search box
+   stay pinned while ONLY the option list (flex:1, its own overflow-y) scrolls
+   inside the fixed-height popover — the standard "sticky header, scrolling
+   body" split, same pattern as .card's title/body. */
+.dash-dropdown-content {
+  border-radius: 11px !important;
+  border: 1px solid var(--card-line) !important;
+  background: var(--surface) !important;
+  box-shadow: 0 12px 30px rgba(30,45,35,.14) !important;
+  font-size: 12px; z-index: 60;
+  display: flex !important; flex-direction: column !important;
+  overflow: hidden;
+  max-height: min(280px, 60vh) !important;
+}
+.dash-dropdown-search-container { background: var(--surface) !important; flex: none; }
+.dash-dropdown-search {
+  background: transparent !important; color: var(--ink) !important;
+  border: none !important; font-size: 12px; font-family: inherit;
+}
+.dash-dropdown-options, .dash-options-list {
+  flex: 1 1 auto !important; min-height: 0 !important;
+  overflow-y: auto !important;
+}
+.dash-dropdown-options::-webkit-scrollbar, .dash-options-list::-webkit-scrollbar { width: 6px; }
+.dash-dropdown-options::-webkit-scrollbar-thumb, .dash-options-list::-webkit-scrollbar-thumb {
+  background: #d3d8c7; border-radius: 999px;
+}
+.dash-dropdown-option { color: var(--t-90) !important; padding: 7px 11px !important; }
+.dash-dropdown-option:hover { background: #eaf3ec !important; color: var(--brand) !important; }
+.dash-dropdown-option.selected { background: #eaf3ec !important; color: var(--brand) !important; font-weight: 700; }
+
+/* chips — some carry a whole example question, so they must be allowed to wrap
+   inside the card rather than run off its right edge. */
+.chip {
+  display: inline-block; max-width: 100%;
+  border: 1px solid var(--card-line); background: #fff; color: var(--t-62);
+  border-radius: 999px; padding: 4px 11px; font-size: 10.5px; font-weight: 600;
+  line-height: 1.4; overflow-wrap: break-word;
+  cursor: pointer; margin: 0 5px 5px 0;
+  transition: background .2s var(--ease-out), color .2s, border-color .2s;
+}
+.chip:hover { background: #eaf3ec; color: var(--brand); border-color: #c9dcc9; }
+
+/* ==========================================================================
+   Tables
+   ========================================================================== */
+
+/* `table-layout: auto`, not `fixed`.
+
+   Fixed gave every column an identical share of the card, so a seven-column
+   table handed "Risk" the same width as "Product" and shredded product names
+   mid-word while the numeric columns sat half empty. Auto lets the browser give
+   each column the width its content actually needs.
+
+   Cells use `break-word`, NOT `anywhere`. The difference is invisible until the
+   table is tight: `anywhere` also drops a column's *minimum* width to a single
+   character, and auto-layout will happily take it — a "Recommended zone" header
+   collapses into one vertical letter per line, and the resulting header row is
+   tall enough to fill the scroll well on its own, hiding every data row behind
+   it. `break-word` keeps each column at least as wide as its longest word while
+   still breaking a genuinely unbreakable string. (The same trap applies to
+   pills in a narrow column, where it split "Bottoms" into "Bottom" / "s".) */
+.tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; table-layout: auto; }
+.tbl th {
+  text-align: left; font-size: 10px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--t-45);
+  padding: 0 10px 9px 0; border-bottom: 1px solid var(--card-line);
+  white-space: normal; overflow-wrap: break-word; vertical-align: bottom;
+}
+.tbl td {
+  padding: 9px 10px 9px 0; border-bottom: 1px solid #f0f3f8; color: var(--t-90);
+  overflow-wrap: break-word; vertical-align: top;
+}
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tbody tr { transition: background .18s var(--ease-out); }
+.tbl tbody tr:hover { background: #f7f9fd; }
+/* Figures are the one thing that must never wrap — "₹1,24,500" split across two
+   lines is unreadable. Keeping them intact also tells auto-layout that these
+   columns need exactly their own width and no more, which is what leaves the
+   remaining space to the text columns. */
+.tbl .num {
+  text-align: right; font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow-wrap: normal;
+}
+/* Column-width hints a page can opt into when it knows one column carries the
+   substance (a product name, an issue summary) and the rest are short codes. */
+.tbl .col-wide   { width: 34%; }
+.tbl .col-narrow { width: 1%; white-space: nowrap; }
+
+/* Two or three facts stacked inside one cell — a health score above its risk
+   pill, a product above its class badge. Folding related columns together is
+   what keeps these tables inside their card instead of scrolling sideways, and
+   the small gap stops the stack reading as one run-on line. */
+.cell-stack { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.tbl .num .cell-stack { align-items: flex-end; }
+/* Capped height + vertical scroll: an 8-row table used to push its card past
+   a full screen. Five rows stay visible, the rest scroll — the data is still
+   there, but one card no longer eats the whole viewport by itself. */
+/* overflow-x is `auto`, not `hidden`. Keeping words intact means a genuinely
+   wide table (seven columns in a split column) can exceed its card; scrolling
+   it inside its own well is honest and readable, whereas hiding the overflow
+   silently amputates the right-hand columns. The page itself still can't scroll
+   sideways — .main-col clips that. */
+.tbl-wrap { overflow-x: auto; overflow-y: auto; max-height: 232px; }
+.tbl-wrap::-webkit-scrollbar { height: 6px; width: 6px; }
+.tbl-wrap::-webkit-scrollbar-thumb { background: #d3d8c7; border-radius: 999px; }
+.tbl thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
+/* A table that's clearly the card's one and only focus (no chart/KPIs above
+   it) earns the full card instead of a scroll well. */
+.tbl-wrap.tbl-full { max-height: none; }
+/* Inside a split column the card is no longer the tall one, so its tables can
+   afford more rows before the scroll well kicks in. */
+@container card (min-width: 680px) {
+  .card-split .tbl-wrap { max-height: 300px; }
+}
+
+/* ==========================================================================
+   Chat
+   ========================================================================== */
+
+.chat-stream {
+  display: flex; flex-direction: column; gap: 10px;
+  max-height: 300px; overflow-y: auto; padding-right: 4px;
+}
+.chat-stream::-webkit-scrollbar { width: 5px; }
+.chat-stream::-webkit-scrollbar-thumb { background: #d3d8c7; border-radius: 999px; }
+.chat-bubble-user {
+  background: #eef2e8; color: var(--ink);
+  border-radius: 14px 14px 14px 4px; padding: 10px 12px;
+  font-size: 12.5px; line-height: 1.5; max-width: 88%; align-self: flex-start;
+  overflow-wrap: break-word;
+}
+.chat-bubble-ai {
+  background: linear-gradient(180deg, var(--brand2), var(--navy)); color: #fff;
+  border-radius: 14px 14px 4px 14px; padding: 10px 12px;
+  font-size: 12.5px; line-height: 1.5; max-width: 88%; align-self: flex-end; margin-left: auto;
+  overflow-wrap: break-word;
+  box-shadow: 0 6px 16px rgba(92,143,110,.25);
+}
+/* A bubble used as a standalone answer panel (Agent Assist's matched SOP and
+   suggested response) is not part of a conversation, so it takes the full
+   width of its column instead of hugging one side. */
+.chat-bubble-ai.bubble-block {
+  max-width: 100%; align-self: stretch; margin-left: 0;
+  border-radius: 12px;
+}
+.copilot-in { animation: copilotIn .38s var(--ease-out) both; }
+@keyframes copilotIn {
+  from { opacity: 0; transform: translateY(9px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ==========================================================================
+   Banners
+   ========================================================================== */
+
+.banner {
+  display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap;
+  padding: 12px 16px; border-radius: 13px; font-size: 12.5px; line-height: 1.5;
+  border: 1px solid; margin-bottom: 18px;
+  overflow-wrap: break-word;
+}
+.banner.warn { background: var(--warn-soft); border-color: #eeddb0; color: var(--warn-ink); }
+.banner.err  { background: var(--accent-soft); border-color: #f3cdbb; color: var(--accent-ink); }
+.banner code {
+  background: rgba(37,53,43,.08); padding: 2px 6px; border-radius: 5px;
+  font-size: 11.5px; font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+
+/* ==========================================================================
+   Grid utilities
+   ========================================================================== */
+
+/* The console grid.
+
+   `align-items: start`, so every card is exactly as tall as its contents.
+   Stretching cards to a common row height was tried and is worse here: these
+   cards differ enormously (Automated Replenishment beside Warehouse
+   Optimization is a ~430px difference), and a bordered card padded out with
+   that much blank reads as a rendering fault, where two cards of honestly
+   different heights just read as a dashboard. Evenness is bought instead by
+   giving genuinely tall cards the full span and splitting them into columns.
+
+   `grid-auto-flow: dense` is deliberately NOT set. With span-2 cards in the mix
+   it back-fills holes by pulling a *later* card up into an earlier gap, which
+   silently reorders the page against the reading order the page module defines. */
+.grid-2 {
+  display: grid; grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: var(--gap); align-items: start;
+}
+.grid-3 {
+  display: grid; grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: var(--gap); align-items: start;
+}
+.span-2 { grid-column: span 2 / span 2; }
+
+.row { display: flex; gap: 10px; }
+.row-wrap { display: flex; gap: 10px; flex-wrap: wrap; }
+.between { justify-content: space-between; }
+.center { align-items: center; }
+.grow { flex: 1; min-width: 0; }
+.mt-0 { margin-top: 0; }
+/* .mt-6 was already being used by module4's Agent Assist and had no rule
+   behind it, so those two bubbles sat flush against their own headings. */
+.mt-6 { margin-top: 6px; }
+.mt-8 { margin-top: 8px; }
+.mt-14 { margin-top: 11px; }
+.mb-0 { margin-bottom: 0; }
+.mb-10 { margin-bottom: 8px; }
+.mb-14 { margin-bottom: 11px; }
+.muted { color: var(--t-55); }
+.small { font-size: 11.5px; }
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* Plotly figures shouldn't add their own background */
+.js-plotly-plot .plotly .main-svg { background: transparent !important; }
+.dash-graph { min-height: 0; }
+
+/* loading */
+._dash-loading { color: transparent; }
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (max-width: 1100px) {
+  .page-head { padding: 30px 24px 20px; }
+  .module-view { padding: 14px 24px 44px; }
+  .page-title { font-size: 32px; }
+  /* Three columns inside ~800px of content column leaves each card too narrow
+     to hold a chart and its axis labels; two is the honest maximum here. */
+  .grid-3 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 900px) {
+  .app-shell { flex-direction: column-reverse; }
+  .sidebar {
+    position: relative; width: 100%; height: auto;
+    border-left: none; border-top: 1px solid var(--card-line);
+  }
+  .nav-scroll { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .nav-heading { grid-column: 1 / -1; }
+  .sidebar-brand { border-bottom: none; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; gap: 14px; }
+  .span-2 { grid-column: span 1 / span 1; }
+  /* One column of cards means every card is now as wide as the page, so the
+     stretch-to-row-height that tidied the two-column grid has nothing left to
+     align against — it would only pad cards out for no reason. */
+  .grid-2, .grid-3 { align-items: start; }
+}
+@media (max-width: 560px) {
+  .page-head { padding: 22px 16px 16px; }
+  .module-view { padding: 12px 16px 36px; }
+  .page-title { font-size: 26px; }
+  .card-title { padding: 18px 18px 10px; font-size: 15px; }
+  .card-pad { padding: 0 18px 18px; }
+  .card-caption { padding: 0 18px 18px; font-size: 12.5px; }
+  .nav-scroll { grid-template-columns: 1fr; }
+  /* On a phone a KPI tile that insists on 190px forces a single column and a
+     very long scroll; two smaller tiles per row read better. */
+  .kpi { flex-basis: 132px; }
+  .kpi-v { font-size: 18px; }
+}
+
+/* ==========================================================================
+   DARK MODE
+   ========================================================================== */
+
+body.dark {
+  --ink: #d9ecdd;
+  --slate-bg: #0c120d;
+  --card-line: #2c4034;
+  --surface: #16211a;
+  --t-90: rgba(217,236,221,.90);
+  --t-70: rgba(217,236,221,.74);
+  --t-62: rgba(217,236,221,.62);
+  --t-55: rgba(217,236,221,.56);
+  --t-45: rgba(217,236,221,.46);
+  --t-38: rgba(217,236,221,.34);
+  --shadow-card: 0 1px 2px rgba(0,0,0,.4), 0 14px 34px rgba(0,0,0,.46);
+  --shadow-soft: 0 1px 2px rgba(0,0,0,.3), 0 8px 22px rgba(0,0,0,.38);
+  --shadow-lift: 0 2px 6px rgba(0,0,0,.45), 0 22px 44px rgba(0,0,0,.55);
+
+  color-scheme: dark;
+  color: #e2f2e6;
+  background-color: #0c120d;
+  background-image:
+    radial-gradient(1100px 560px at 82% -8%, rgba(56,96,72,.38) 0%, rgba(12,18,13,0) 55%),
+    radial-gradient(900px 500px at 0% 100%, rgba(42,72,54,.28) 0%, rgba(12,18,13,0) 50%);
+  background-attachment: fixed;
+}
+
+body.dark .eyebrow { color: var(--brand3); }
+body.dark .sidebar { background: rgba(18,28,21,.62); }
+body.dark .card { background-image: linear-gradient(180deg, rgba(255,255,255,.018), rgba(255,255,255,0)); }
+body.dark .card:hover { border-color: #3f5c48; }
+body.dark .nav-btn:hover { background: #182620; color: #fff; }
+body.dark .nav-btn.active {
+  background: linear-gradient(180deg,#1c2a20,#141f18);
+  color: #fff; border-color: #2c4034;
+}
+body.dark .nav-btn.active .nav-index { color: var(--brand3); }
+body.dark .nav-ic { background: #1c2b21; color: var(--brand3); }
+body.dark .nav-btn:hover .nav-ic { background: #233626; }
+body.dark .nav-btn.active .nav-ic { background: linear-gradient(180deg,var(--brand2),var(--brand)); color: #fff; }
+body.dark .nav-caret { color: rgba(217,236,221,.28); }
+body.dark .nav-btn.active .nav-caret { color: var(--brand3); }
+
+body.dark .theme-btn { background: #1a2a20; border-color: #2c4034; color: #cfe0d3; }
+body.dark .theme-btn:hover { background: #21362a; }
+
+body.dark .info-ic { background: #1c2b21; border-color: #304530; color: #9fc2a8; }
+body.dark .info-pop { background: #0b120d; }
+body.dark .info-pop::before { background: #0b120d; }
+
+body.dark .kpi { background: #142019; }
+body.dark .kpi:hover { border-color: #3a5f47; }
+body.dark .bar-track { background: #263c2e; }
+body.dark .stat-row { border-bottom-color: #22331f; }
+body.dark .tbl td { border-bottom-color: #22331f; }
+body.dark .tbl tbody tr:hover { background: #16261c; }
+
+body.dark .pill.high    { background: rgba(192,114,74,.20); color: #e3ab86; }
+body.dark .pill.medium  { background: rgba(210,164,78,.20); color: #e6c98a; }
+body.dark .pill.low     { background: rgba(76,139,99,.20); color: #a4d3b2; }
+body.dark .pill.info    { background: #1c2b21; color: var(--brand3); }
+body.dark .pill.neutral { background: #1c2b21; color: rgba(217,236,221,.62); }
+body.dark .wave    { background: #1c2b21; color: var(--brand3); }
+body.dark .wave.w2 { background: rgba(210,164,78,.18); color: #e6c98a; }
+body.dark .wave.w3 { background: rgba(192,114,74,.18); color: #e3ab86; }
+
+body.dark .cp-input, body.dark .cp-select { background: #10190f !important; border-color: #2c4034 !important; color: #d9ecdd !important; }
+body.dark .cp-go { background: #5f9678; }
+body.dark .cp-go:hover { background: var(--brand2); }
+body.dark .chip { background: #142019; border-color: #2c4034; color: rgba(217,236,221,.62); }
+body.dark .chip:hover { background: #1c2e22; color: var(--brand3); }
+body.dark .chat-bubble-user { background: #1c2b21; color: #d9ecdd; }
+body.dark .banner code { background: rgba(255,255,255,.10); }
+
+body.dark .dash-dropdown-trigger { background: #10190f !important; border-color: #2c4034 !important; }
+body.dark .dash-dropdown-trigger:hover { border-color: #3a5f47 !important; }
+body.dark .dash-dropdown-value,
+body.dark .dash-dropdown-value-item { color: #d9ecdd !important; }
+body.dark .dash-dropdown-trigger-icon { color: var(--brand3) !important; }
+body.dark .dash-dropdown-content { background: #16211a !important; border-color: #2c4034 !important; }
+body.dark .dash-dropdown-search-container { background: #16211a !important; }
+body.dark .dash-dropdown-search { color: #d9ecdd !important; }
+body.dark .dash-dropdown-option { color: rgba(217,236,221,.82) !important; }
+body.dark .dash-dropdown-option:hover,
+body.dark .dash-dropdown-option.selected { background: #1c2e22 !important; color: var(--brand3) !important; }
+
+/* ── Route & Fleet map ──────────────────────────────────────────────────────
+   The MapLibre canvas is framed like the analytical cards — rounded, hairline
+   border, soft shadow — so a live map sits inside the surface instead of
+   bleeding to the card edge. Overflow is clipped so the corners stay round. */
+.route-map {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--card-line);
+  box-shadow: 0 1px 2px rgba(37, 53, 43, .06), 0 8px 24px rgba(37, 53, 43, .07);
+}
+.route-map .maplibregl-map,
+.route-map .mapboxgl-map { border-radius: 14px; }
+/* Carto attribution is required by the tiles' licence — keep it, just make it
+   quiet so it reads as fine print rather than chrome. */
+.route-map .maplibregl-ctrl-attrib,
+.route-map .mapboxgl-ctrl-attrib {
+  background: rgba(255, 255, 255, .72) !important;
+  font-size: 9.5px; border-radius: 8px 0 0 0;
+}
+body.dark .route-map { border-color: #2c4034; box-shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.28); }
+body.dark .route-map .maplibregl-ctrl-attrib,
+body.dark .route-map .mapboxgl-ctrl-attrib {
+  background: rgba(11, 18, 13, .66) !important;
+}
+body.dark .route-map .maplibregl-ctrl-attrib a,
+body.dark .route-map .mapboxgl-ctrl-attrib a { color: rgba(207,224,211,.7) !important; }
+
+/* ==========================================================================
+   Horizontal-overflow containment
+   No card should ever produce a horizontal scrollbar. Grid tracks already use
+   minmax(0,1fr); these rules stop any inner content (charts, tables, long
+   unbroken strings, Plotly's measured SVG width) from forcing a card — or the
+   page — wider than its column.
+   ========================================================================== */
+.grid-2 > *, .grid-3 > * { min-width: 0; max-width: 100%; }
+.card { max-width: 100%; }
+/* Clip stray horizontal overflow inside the card body while leaving vertical
+   overflow visible, so dropdown popovers still expand past the card edge. */
+.card-pad { min-width: 0; overflow-x: clip; }
+/* Plotly figures must track their container, never their render-time width. */
+.dash-graph, .dash-graph > div, .js-plotly-plot, .js-plotly-plot .svg-container {
+  max-width: 100% !important;
+}
+/* Final safety net: the content column never scrolls sideways. */
+.main-col { overflow-x: hidden; }
+
+/* A single, standalone card (the AI Assistant tab) shouldn't sprawl across the
+   whole content width — cap it and centre it so it reads as a focused panel.
+
+   `width: 100%` is load-bearing, not decoration. Auto inline margins turn a grid
+   item into a shrink-to-fit box, and .card is a query container
+   (container-type: inline-size), which means its width is resolved *without
+   consulting its contents*. Shrink-to-fit with nothing to shrink to is zero: the
+   card collapsed to its 2px of border and every line of text inside it stacked
+   one character per row. Stating an explicit width gives containment a size to
+   work from, and max-width + auto margins still cap and centre it. */
+.card-solo { width: 100%; max-width: 900px; margin-inline: auto; }
+
+/* ── In-card filters ───────────────────────────────────────────────────────
+   Controls that belong to one card sit inside it, directly above the mark they
+   scope. A reader never has to look elsewhere to know what the chart is showing.
+
+   The fields wrap rather than shrink: a dropdown narrow enough to fit three
+   across a phone truncates "Ethnic Wear" to "Ethni…", which makes the control
+   useless at exactly the width where its label matters most. */
+.card-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  align-items: flex-end;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--card-line);
+}
+
+.filter-field { flex: 1 1 170px; min-width: 150px; }
+.filter-field > label { display: block; margin-bottom: 6px; }
+
+/* An open dropdown overflows its card. Cards are position:relative and paint
+   in DOM order, so without this the *next* card down covers the menu — which
+   is exactly what it looked like: a filter you could open but not read.
+   Raising the hosting card lifts it above its later siblings.
+
+   Only the hosting card is raised. Giving every card an explicit z-index would
+   turn each one into a stacking context and trap its info tooltip inside,
+   which is the same bug one layer down. */
+.card.has-filters { z-index: 25; }

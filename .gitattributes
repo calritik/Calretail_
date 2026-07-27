@@ -1,0 +1,21 @@
+# Normalise line endings to LF in the repo; checkout as-is on Windows
+* text=auto eol=lf
+
+# Force LF for shell scripts (must be LF to run in containers/Linux)
+*.sh text eol=lf
+
+# Treat notebooks as text (diffable)
+*.ipynb text eol=lf
+
+# Binaries — no line-ending conversion
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.pkl binary
+*.joblib binary
+*.h5 binary
+*.pt binary
+*.onnx binary

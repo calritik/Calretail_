@@ -1,3 +1,13 @@
+---
+title: CalRetail AI Platform
+emoji: 🛍️
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # 🛍️ CalRetail — Enterprise Retail AI Intelligence Platform
 
 > **16 AI Capabilities · 4 Domains · 35 REST APIs · Dash Console**

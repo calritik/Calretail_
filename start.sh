@@ -25,7 +25,12 @@ fi
 
 echo "start.sh: serving Dash on ${DASH_HOST:-127.0.0.1}:${DASH_PORT}"
 
-nohup uvicorn backend.main:app --host 127.0.0.1 --port 8000 > /tmp/uvicorn.log 2>&1 &
+(while true; do
+  echo "start.sh: starting uvicorn backend..."
+  uvicorn backend.main:app --host 127.0.0.1 --port 8000
+  echo "start.sh: uvicorn exited, restarting in 2s..."
+  sleep 2
+done) > /tmp/uvicorn.log 2>&1 &
 
 # exec replaces this shell with the Dash process (so it becomes the
 # container's PID 1 and receives SIGTERM directly from HF); the backgrounded

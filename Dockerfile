@@ -35,7 +35,10 @@ RUN chmod +x start.sh
 # check would connect to nothing while the app ran fine. start.sh resolves it.
 ENV PYTHONUTF8=1 \
     PYTHONUNBUFFERED=1 \
-    DASH_HOST=0.0.0.0
+    DASH_HOST=0.0.0.0 \
+    CALRETAIL_TABLE_CACHE=2 \
+    CALRETAIL_MAX_CONCURRENCY=2 \
+    CALRETAIL_COMPACT_DTYPES=1
 
 EXPOSE 7860
 

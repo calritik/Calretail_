@@ -91,4 +91,10 @@ def clear_cache():
 
 
 def backend_is_up() -> bool:
-    return api_get("/health", ttl=5) is not None
+    # Retry up to 3 times on boot to handle startup timing when uvicorn is initializing
+    for _ in range(3):
+        if api_get("/health", ttl=2) is not None:
+            return True
+        time.sleep(0.8)
+    return False
+

@@ -53,7 +53,7 @@ def _card_recommendations(opts):
                 ],
                 className="cp-row",
             ),
-            html.Div(id="cx-rec-out"),
+            dcc.Loading(html.Div(id="cx-rec-out"), color=colors.BRAND, type="dot", className="dash-loading-wrapper"),
         ],
         caption=(
             "Admin view — shows why each product was recommended: past purchases, "
@@ -305,7 +305,7 @@ def _card_assistant(opts):
             ),
             html.Div([html.Span(s, className="chip", id={"type": "cx-chip", "i": i})
                       for i, s in enumerate(SUGGESTED)], className="mb-10"),
-            html.Div(id="cx-asst-out"),
+            dcc.Loading(html.Div(id="cx-asst-out"), color=colors.BRAND, type="dot", className="dash-loading-wrapper"),
         ],
         caption="Natural-language intent extraction — category, colour and price ceiling parsed, matched against live stock.",
         info=(

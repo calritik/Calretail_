@@ -74,7 +74,7 @@ def _card_chatbot(opts):
             ),
             html.Div([html.Span(p, className="chip", id={"type": "su-chip", "i": i})
                       for i, p in enumerate(PROMPTS)], className="mb-10"),
-            html.Div(id="su-chat-out"),
+            dcc.Loading(html.Div(id="su-chat-out"), color=colors.BRAND, type="dot", className="dash-loading-wrapper"),
         ],
         caption="Tier-0 deflection — the bot resolves order, returns and product questions against the customer's own history.",
         info="<b>Flow:</b> intent classification → answer from live customer order and catalogue records.",

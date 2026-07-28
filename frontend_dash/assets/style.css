@@ -1056,3 +1056,158 @@ body.dark .route-map .mapboxgl-ctrl-attrib a { color: rgba(207,224,211,.7) !impo
    turn each one into a stacking context and trap its info tooltip inside,
    which is the same bug one layer down. */
 .card.has-filters { z-index: 25; }
+
+/* ==========================================================================
+   CalRetail Sage-Green Custom Loading Animation & Skeleton System
+   ========================================================================== */
+
+@keyframes dashSpinner {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes dashPulse {
+  0%, 100% { transform: scale(0.85); opacity: 0.5; box-shadow: 0 0 8px rgba(92, 143, 110, 0.4); }
+  50% { transform: scale(1.15); opacity: 1; box-shadow: 0 0 20px rgba(92, 143, 110, 0.8); }
+}
+
+@keyframes skeletonShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(92, 143, 110, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(92, 143, 110, 0); }
+}
+
+/* Custom Sage Loader Component */
+.sage-loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  gap: 16px;
+  min-height: 140px;
+}
+
+.sage-spinner-wrapper {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sage-spinner-ring {
+  box-sizing: border-box;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 3.5px solid transparent;
+  border-top-color: var(--brand);
+  border-right-color: var(--brand2);
+  border-radius: 50%;
+  animation: dashSpinner 0.85s linear infinite;
+}
+
+.sage-spinner-ring-inner {
+  box-sizing: border-box;
+  position: absolute;
+  width: 68%;
+  height: 68%;
+  border: 2.5px solid transparent;
+  border-bottom-color: var(--navy);
+  border-left-color: var(--brand3);
+  border-radius: 50%;
+  animation: dashSpinner 0.6s linear infinite reverse;
+}
+
+.sage-spinner-core {
+  width: 10px;
+  height: 10px;
+  background-color: var(--brand);
+  border-radius: 50%;
+  animation: dashPulse 1.2s ease-in-out infinite;
+}
+
+.sage-loader-label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--t-70);
+  animation: titleIn 0.4s var(--ease-out) both;
+}
+
+/* Skeleton Loading Elements */
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(226, 228, 215, 0.4) 25%,
+    rgba(255, 255, 255, 0.85) 50%,
+    rgba(226, 228, 215, 0.4) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+html[data-theme="dark"] .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(32, 48, 38, 0.4) 25%,
+    rgba(63, 102, 82, 0.5) 50%,
+    rgba(32, 48, 38, 0.4) 75%
+  );
+  background-size: 200% 100%;
+}
+
+.skeleton-text {
+  height: 14px;
+  margin-bottom: 8px;
+  width: 80%;
+}
+
+.skeleton-text-short {
+  height: 14px;
+  margin-bottom: 8px;
+  width: 45%;
+}
+
+.skeleton-title {
+  height: 24px;
+  margin-bottom: 12px;
+  width: 60%;
+}
+
+.skeleton-kpi-tile {
+  height: 72px;
+  border-radius: 12px;
+}
+
+.skeleton-chart-box {
+  height: 220px;
+  border-radius: 12px;
+}
+
+/* Dash Native Loading Overlays & Transitions */
+._dash-loading {
+  position: relative;
+  opacity: 0.65;
+  filter: blur(1.5px);
+  transition: opacity 0.3s var(--ease-out), filter 0.3s var(--ease-out);
+}
+
+.dash-loading-wrapper {
+  backdrop-filter: blur(4px);
+  border-radius: 14px;
+}
+
+/* Active Button Animation */
+.cp-go:active, .cp-go[data-dash-is-loading="true"] {
+  animation: pulseGlow 1s ease-in-out infinite;
+  opacity: 0.85;
+}
+

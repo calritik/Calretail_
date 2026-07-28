@@ -265,3 +265,33 @@ def caveat(text):
     """
     return html.Div([html.Span("◆ "), html.Span(text)], className="banner warn",
                     style={"marginBottom": "12px", "fontSize": "11.5px", "padding": "8px 12px"})
+
+
+def sage_loader(label: str = "Calculating AI insights..."):
+    return html.Div(
+        [
+            html.Div(
+                [
+                    html.Div(className="sage-spinner-ring"),
+                    html.Div(className="sage-spinner-ring-inner"),
+                    html.Div(className="sage-spinner-core"),
+                ],
+                className="sage-spinner-wrapper",
+            ),
+            html.Div(label, className="sage-loader-label"),
+        ],
+        className="sage-loader-container",
+    )
+
+
+def skeleton_card():
+    return html.Div(
+        [
+            html.Div(className="skeleton-shimmer skeleton-title"),
+            html.Div(className="skeleton-shimmer skeleton-text"),
+            html.Div(className="skeleton-shimmer skeleton-text-short"),
+            html.Div(className="skeleton-shimmer skeleton-chart-box"),
+        ],
+        style={"padding": "16px"},
+    )
+

@@ -73,25 +73,33 @@ Deliver real-time personalized product recommendations for each shopper based on
 4. **Scoring & Category Boosting**: Projects user similarity weights onto product matrices and applies data-derived category conversion multipliers.
 5. **Cold-Start Fallback**: If a user has no interaction history, returns category bestsellers ranked by volume.
 
-#### Mathematical Formulation
-1. **Implicit Interaction Weighting**:
-   $$\text{Signal}(u, i) = w_p \cdot \text{Qty}(u,i) + w_c \cdot \text{CartCount}(u,i) + w_w \cdot \text{WishlistCount}(u,i)$$
-   Where default weights are $w_p = 3.0$ (Purchases), $w_c = 2.0$ (Cart additions), and $w_w = 1.0$ (Wishlist saves).
+#### Human-Readable Formulas
 
-2. **User Cosine Similarity Vector**:
-   $$\text{Sim}(u, v) = \frac{\mathbf{u} \cdot \mathbf{v}}{\|\mathbf{u}\|_2 \|\mathbf{v}\|_2} = \frac{\sum_{i} \text{Signal}(u,i) \cdot \text{Signal}(v,i)}{\sqrt{\sum_{i} \text{Signal}(u,i)^2} \sqrt{\sum_{i} \text{Signal}(v,i)^2}}$$
+1. **Implicit Behavior Signal Calculation**:
+   ```
+   Signal(User, Product) = (3.0 * Purchase Quantity) + (2.0 * Cart Addition Count) + (1.0 * Wishlist Count)
+   ```
+   *Explanation: Gives highest weight (3.0) to actual purchases, medium weight (2.0) to active/abandoned carts, and light weight (1.0) to wishlist items.*
 
-3. **Predicted Product Score with Category Multiplier**:
-   $$\text{Score}(u, i) = \left( \sum_{v \neq u} \text{Sim}(u, v) \cdot \text{Signal}(v, i) \right) \times \gamma_{\text{cat}(i)}$$
-   Where $\gamma_{\text{cat}(i)}$ is the learned category conversion rate boost.
+2. **User Cosine Similarity**:
+   ```
+   Similarity(User_A, User_B) = Sum(Signal_A * Signal_B) / [ Sqrt(Sum(Signal_A^2)) * Sqrt(Sum(Signal_B^2)) ]
+   ```
+   *Explanation: Measures how similarly two customers shop. Result ranges from 0.0 (no overlap) to 1.0 (identical shopping behavior).*
+
+3. **Final Recommendation Score**:
+   ```
+   Final Score = Sum(Similarity(User, OtherUser) * OtherUser_Product_Signal) * Category_Boost_Multiplier
+   ```
+   *Explanation: Recommends items bought by similar shoppers, scaled by how well that product category converts overall.*
 
 #### Concrete Numerical Example
-- **Target User**: `C00001` (Niharika Bhatti)
-- **User Signal Vector**: Bought `P00012` (Denim Jacket, Qty 2) $\rightarrow \text{Signal} = 2 \times 3.0 = 6.0$. Carted `P00045` (Boots) $\rightarrow \text{Signal} = 2.0$.
-- **Similar User `C00084`**: Similarity $\text{Sim}(C00001, C00084) = 0.85$. User `C00084` bought `P00099` (Leather Bag, Signal 3.0).
-- **Raw Score for `P00099`**: $0.85 \times 3.0 = 2.55$.
-- **Category Multiplier**: Accessories category boost $\gamma = 1.15$.
-- **Final Product Score**: $2.55 \times 1.15 = 2.93$ $\rightarrow$ **Rank #1 Recommended Product**.
+- **Target Customer**: `C00001` (Niharika Bhatti)
+- **User Action**: Bought `P00012` (Denim Jacket, Qty 2) $\rightarrow$ Signal = 2 * 3.0 = **6.0**.
+- **Similar Shopper `C00084`**: Similarity Score = **0.85**. User `C00084` bought `P00099` (Leather Bag, Signal 3.0).
+- **Raw Score for `P00099`**: 0.85 * 3.0 = **2.55**.
+- **Category Multiplier**: Accessories category boost = **1.15x**.
+- **Final Product Score**: 2.55 * 1.15 = **2.93** $\rightarrow$ **Rank #1 Recommended Item**.
 
 ---
 
@@ -107,19 +115,28 @@ Provide natural language shopping assistance, converting user intent queries (e.
 3. **Similarity Retrieval**: Ranks candidate items using cosine similarity of query TF-IDF vector against product corpus.
 4. **LLM Response Synthesis**: Formats catalog matches into conversational advice via Gemini/Groq/OpenAI APIs (with deterministic fallback).
 
-#### Mathematical Formulation
-1. **Term Frequency-Inverse Document Frequency (TF-IDF)**:
-   $$\text{TF}(t, d) = \frac{f_{t,d}}{\sum_{t' \in d} f_{t',d}}, \quad \text{IDF}(t, D) = \ln \left( \frac{|D|}{1 + |\{d \in D : t \in d\}|} \right)$$
-   $$\text{TF-IDF}(t, d, D) = \text{TF}(t, d) \times \text{IDF}(t, D)$$
+#### Human-Readable Formulas
 
-2. **Query Relevance Ranking**:
-   $$\text{Relevance}(q, d) = \frac{\mathbf{q}_{\text{tfidf}} \cdot \mathbf{d}_{\text{tfidf}}}{\|\mathbf{q}_{\text{tfidf}}\| \|\mathbf{d}_{\text{tfidf}}\|} \quad \text{subject to} \quad \text{Price}(d) \le P_{\text{max}}$$
+1. **Term Frequency-Inverse Document Frequency (TF-IDF)**:
+   ```
+   Term Frequency (TF) = (Count of Keyword in Product Text) / (Total Words in Product Text)
+   Inverse Document Frequency (IDF) = Log( Total Number of Products / Products Containing Keyword )
+   TF-IDF Weight = Term Frequency * Inverse Document Frequency
+   ```
+   *Explanation: Highlights unique product features (like "Puffer" or "Denim") while ignoring common words (like "the" or "and").*
+
+2. **Query Relevance Score**:
+   ```
+   Relevance = Sum(Query_TFIDF * Product_TFIDF) / [ Length(Query_Vector) * Length(Product_Vector) ]
+   Filter Constraint: Product_Price <= Maximum_Budget_Extracted
+   ```
 
 #### Concrete Numerical Example
 - **Query**: `"red jacket under 3000"`
-- **Extracted Constraint**: $P_{\text{max}} = 3000$, Category = `Outerwear`, Color = `Red`.
+- **Extracted Constraints**: Max Price = ₹3,000 | Category = Outerwear | Color = Red.
 - **Product Match**: `P00102` (*Red Puffer Winter Jacket*, Price = ₹2,499).
-- **TF-IDF Similarity Score**: $0.92$. Filter passes since ₹2,499 $\le$ ₹3,000.
+- **TF-IDF Similarity Score**: **0.92**. Filter passes (₹2,499 <= ₹3,000).
+- **Assistant Response**: *"I found the Red Puffer Winter Jacket for ₹2,499, which fits your ₹3,000 budget perfectly!"*
 
 ---
 
@@ -135,20 +152,27 @@ Target customers with optimal discount offers based on their persona segment to 
 3. **Uplift Propensity Calculation**: Computes expected conversion lift for candidate promotion discount tiers.
 4. **Optimal Offer Selection**: Selects the offer yielding maximum expected incremental margin.
 
-#### Mathematical Formulation
-1. **RFM Score Scaling**:
-   $$R_i = \text{DaysSinceLastPurchase}(u_i), \quad F_i = \text{TotalOrders}(u_i), \quad M_i = \text{TotalSpend}(u_i)$$
+#### Human-Readable Formulas
 
-2. **Expected Incremental Revenue ($EIR$)**:
-   $$EIR(u, o) = \text{BasketValue}(u) \times \Delta P_{\text{conv}}(o \mid S_u) \times (1 - \text{DiscountPct}(o))$$
-   Where $\Delta P_{\text{conv}}(o \mid S_u)$ is the segment-specific conversion uplift probability of offer $o$.
+1. **RFM Scoring**:
+   ```
+   Recency = Days since last customer transaction
+   Frequency = Total count of orders placed
+   Monetary = Total lifetime spend in rupees
+   ```
+
+2. **Expected Incremental Revenue (EIR)**:
+   ```
+   Incremental Revenue = Average_Basket_Value * Conversion_Uplift_Percentage * (1.0 - Discount_Percentage)
+   ```
+   *Explanation: Measures net revenue gained after subtracting discount cost and multiplying by likelihood to convert.*
 
 #### Concrete Numerical Example
-- **Customer Segment**: *Value Hunter* (High frequency, low basket value).
-- **Base Conversion Rate**: $12\%$.
-- **Offer A (10% Off)**: Expected conversion $18\%$ ($\Delta P = +6\%$). Incremental margin = ₹120.
-- **Offer B (25% Off)**: Expected conversion $28\%$ ($\Delta P = +16\%$). Incremental margin = ₹95 (due to margin erosion).
-- **Decision**: Select **Offer A (10% Off)** as Next-Best-Offer.
+- **Customer Segment**: *Value Hunter* (High order frequency, small basket size).
+- **Base Conversion Rate**: 12%.
+- **Option 1 (10% Discount)**: Increases conversion to 18% (+6% Uplift). **Net Incremental Margin = ₹120**.
+- **Option 2 (25% Discount)**: Increases conversion to 28% (+16% Uplift). **Net Incremental Margin = ₹95** (margin eroded by heavy discount).
+- **Decision**: Recommend **Option 1 (10% Discount)** as Next-Best-Offer.
 
 ---
 
@@ -161,21 +185,23 @@ Predict the exact hour of the day and day of the week when a customer is most li
 #### End-to-End Pipeline Architecture
 1. **Session Timestamp Extraction**: Pulls historical browsing session start times and transaction timestamps.
 2. **Hourly Kernel Density Estimation**: Fits a continuous probability density function over 24 hours.
-3. **Peak Hour Identification**: Finds the global maximum of the density function $\hat{f}(t)$.
+3. **Peak Hour Identification**: Finds the peak probability hour for each customer.
 4. **Channel Preference Selection**: Maps historical open responses to Email, Push Notification, or SMS.
 
-#### Mathematical Formulation
-1. **Kernel Density Estimation (KDE)**:
-   $$\hat{f}(t) = \frac{1}{n h} \sum_{i=1}^{n} K \left( \frac{t - t_i}{h} \right)$$
-   Where $K(x) = \frac{1}{\sqrt{2\pi}} e^{-\frac{1}{2}x^2}$ is the Gaussian kernel and $h$ is the bandwidth parameter.
+#### Human-Readable Formulas
 
-2. **Optimal Send Hour**:
-   $$t^* = \arg\max_{t \in [0, 23]} \hat{f}(t)$$
+1. **Engagement Probability Density**:
+   ```
+   Hourly Density(Hour) = Average( Smooth Curve over User Session Timestamps )
+   Optimal Send Hour = Hour with the Highest Density Peak
+   ```
+   *Explanation: Creates a smooth 24-hour curve over when the shopper actively browses or buys, identifying their peak attention hour.*
 
 #### Concrete Numerical Example
-- **Customer History**: 15 session events logged at 19:15, 19:40, 20:05, 20:20, 21:00...
-- **KDE Output**: Peak density occurs at $t^* = 20.2$ hours.
-- **Recommendation**: Send Push Notification at **8:00 PM (20:00)** on **Thursdays**. Predicted Open Rate = **34.2%** (vs 8.1% population average).
+- **Customer History**: 15 activity sessions recorded at 7:15 PM, 7:40 PM, 8:05 PM, 8:20 PM, 9:00 PM...
+- **KDE Peak Curve**: Reaches global maximum at **20:00 (8:00 PM)**.
+- **Optimal Schedule**: Send Push Notification on **Thursdays at 8:00 PM**.
+- **Predicted Open Rate**: **34.2%** (vs 8.1% average store open rate).
 
 ---
 
@@ -194,19 +220,23 @@ Forecast daily sales volume per product for the next 30 days to optimize procure
 2. **Model Training**: Trains a global XGBoost Regressor across the historical SKU transaction matrix.
 3. **Recursive Multi-Step Rollout**: Predicts day $t+1$, updates lag features recursively, and forecasts out to 30 days.
 
-#### Mathematical Formulation
-1. **XGBoost Objective Function**:
-   $$\mathcal{L}^{(t)} = \sum_{i=1}^{n} l\left(y_i, \hat{y}_i^{(t-1)} + f_t(x_i)\right) + \sum_{k=1}^{t} \Omega(f_k)$$
-   Where regularizer $\Omega(f) = \gamma T + \frac{1}{2}\lambda \sum_{j=1}^{T} w_j^2$.
+#### Human-Readable Formulas
 
-2. **Feature Equation**:
-   $$\hat{y}_{i, t+k} = F_{\text{XGBoost}}\left( y_{i, t+k-7}, y_{i, t+k-14}, \text{MA}_{7}(y_i), \text{DayOfWeek}, \text{IsHoliday} \right)$$
+1. **Predictive Sales Feature Equation**:
+   ```
+   Predicted Sales(Day t) = XGBoost_Model( Sales(t-7), Sales(t-14), Moving_Average_7Day, Day_of_Week, Is_Holiday )
+   ```
+
+2. **Moving Average (7-Day)**:
+   ```
+   MA_7 = ( Sales(t-1) + Sales(t-2) + ... + Sales(t-7) ) / 7
+   ```
 
 #### Concrete Numerical Example
-- **SKU**: `P00001` (Classic White Cotton Shirt)
-- **Lag Features**: $y_{t-7} = 14$ units, $\text{MA}_7 = 12.5$ units/day, Day = Saturday (1.2x boost), Holiday = 0.
-- **Model Output**: Predicted Day 1 Demand = **16 units**.
-- **30-Day Forecast Total**: **485 units** ($\pm 4.2\%$ MAE).
+- **Product**: `P00001` (Classic White Cotton Shirt)
+- **Input Features**: 7-day lag = 14 units | 7-day average = 12.5 units/day | Day = Saturday (1.2x weekend multiplier) | Holiday = 0.
+- **Predicted Day 1 Demand**: **16 units**.
+- **Total 30-Day Cumulative Forecast**: **485 units** ($\pm 4.2\%$ Mean Absolute Error).
 
 ---
 
@@ -222,22 +252,36 @@ Dynamically adjust product prices based on competitor rates, inventory levels, s
 3. **Competitor Benchmarking**: Computes competitor average price $\bar{P}_{\text{comp}}$.
 4. **Margin Floor & Cap Enforcer**: Bounds recommended price within $[0.75 P_{\text{curr}}, 1.25 P_{\text{curr}}]$ and above Cost $+ 5\%$.
 
-#### Mathematical Formulation
-1. **Price Elasticity of Demand**:
-   $$\epsilon = \frac{\% \Delta Q}{\% \Delta P} = \frac{(Q_{\text{new}} - Q_{\text{old}})/Q_{\text{old}}}{(P_{\text{new}} - P_{\text{old}})/P_{\text{old}}}$$
+#### Human-Readable Formulas
 
-2. **Composite Price Multiplier**:
-   $$M = 1.0 + \underbrace{0.14 (\bar{r}_{\text{inv}} - r_{\text{inv}})}_{f_{\text{inv}}} + \underbrace{0.08 \cdot r_{\text{stockout}}}_{f_{\text{risk}}} + \underbrace{\text{clip}\left(0.04 [\ln(1+v) - \ln(1+\bar{v})], -0.06, 0.06\right)}_{f_{\text{vel}}}$$
+1. **Price Elasticity of Demand**:
+   ```
+   Elasticity = (% Change in Quantity Demanded) / (% Change in Price)
+   ```
+   *Explanation: Measures how sensitive customers are to price changes. For example, Elasticity = -1.5 means a 10% price drop increases sales by 15%.*
+
+2. **Composite Price Adjustment Factor**:
+   ```
+   Inventory Factor = 0.14 * ( Median_Store_Stock_Ratio - Product_Stock_Ratio )
+   Risk Factor = 0.08 * Stockout_Risk_Level
+   Velocity Factor = 0.04 * [ Log(1 + Product_Sales_Velocity) - Log(1 + Store_Median_Velocity) ]
+   
+   Total Adjustment = Inventory Factor + Risk Factor + Velocity Factor
+   ```
 
 3. **Recommended Price Execution**:
-   $$P_{\text{rec}} = \max\left(1.05 \cdot \text{Cost}, \min\left(1.25 P_{\text{curr}}, \max\left(0.75 P_{\text{curr}}, \bar{P}_{\text{comp}} \cdot M\right)\right)\right)$$
+   ```
+   Raw Recommended Price = Average_Competitor_Price * ( 1.0 + Total Adjustment )
+   Final Price = Keep price between (Cost + 5%) and (Current Price +/- 25%)
+   ```
 
 #### Concrete Numerical Example
-- **Product**: `P00010` ($P_{\text{curr}} = ₹1,200$, Cost = ₹700, $\bar{P}_{\text{comp}} = ₹1,150$).
-- **Inventory Ratio**: $r_{\text{inv}} = 0.85$ (High stock, population median $\bar{r}_{\text{inv}} = 0.45$).
-- **Factors**: $f_{\text{inv}} = 0.14 \times (0.45 - 0.85) = -0.056$.
-- **Raw Price**: $1150 \times (1.0 - 0.056) = ₹1,085.60$.
-- **Recommendation**: Reprice to **₹1,085** (-9.5% markdown). Projected Volume Lift: **+13.3%**. Estimated Revenue Lift: **+2.5%**.
+- **Product**: `P00010` (Current Price = ₹1,200 | Cost = ₹700 | Average Competitor Price = ₹1,150).
+- **Stock Situation**: Product Stock Ratio = 85% (Excess stock vs store median 45%).
+- **Inventory Factor**: 0.14 * (0.45 - 0.85) = **-0.056** (-5.6% adjustment).
+- **Raw Price**: ₹1,150 * (1 - 0.056) = ₹1,085.60.
+- **Recommended Price**: **₹1,085** (-9.5% price cut).
+- **Projected Sales Volume Lift**: **+13.3%**. Estimated Revenue Impact: **+2.5%**.
 
 ---
 
@@ -252,21 +296,25 @@ Optimize promotional discount depth to maximize net margin, accounting for deman
 2. **Cannibalization Rate Estimation**: Calculates sales reduction in non-promoted substitute items.
 3. **Net Margin Optimization**: Evaluates net profit across discount steps ($5\%, 10\%, 15\%, \dots, 50\%$).
 
-#### Mathematical Formulation
-1. **Promotional Volume Uplift**:
-   $$\text{Uplift}(d) = \alpha \cdot d^{\beta}$$
-   Where $d$ is the discount fraction (e.g. $0.20$ for 20%).
+#### Human-Readable Formulas
 
-2. **Net Margin Impact**:
-   $$\Delta \text{Margin}(d) = Q_{\text{base}} (1 + \text{Uplift}(d)) \cdot [P_{\text{base}}(1-d) - \text{Cost}] - Q_{\text{base}} \cdot [P_{\text{base}} - \text{Cost}] - \text{CannibalizationLoss}$$
+1. **Promotional Demand Uplift**:
+   ```
+   Sales Volume Uplift = Base_Uplift_Multiplier * ( Discount_Percentage ^ Curve_Exponent )
+   ```
+
+2. **Net Margin Gain**:
+   ```
+   Net Profit = ( Promoted_Units_Sold * [ Discounted_Price - Product_Cost ] ) - Cannibalization_Loss
+   ```
 
 #### Concrete Numerical Example
-- **Promotion Campaign**: Summer Clearance on Tops ($P_{\text{base}} = ₹1,000$, Cost = ₹400).
-- **Tested Discount**: $25\%$ Off ($P_{\text{promo}} = ₹750$).
-- **Uplift**: $+65\%$ volume increase ($Q$ goes from 100 to 165 units).
-- **Cannibalization Penalty**: 14% substitution loss on regular shirts (-₹4,200).
-- **Net Margin**: Base Margin = ₹60,000. Promo Margin = $165 \times (750 - 400) - 4200 = ₹53,550$.
-- **Optimal Decision**: Reduce discount to **18% Off** to achieve maximum Net Margin of **₹64,200**.
+- **Promotion Campaign**: Summer Sale on Tops (Base Price = ₹1,000 | Cost = ₹400).
+- **Tested 25% Discount**: Sale Price = ₹750.
+- **Sales Uplift**: Volume increases +65% (from 100 units to 165 units).
+- **Cannibalization Loss**: Loss of sales on full-price shirts = -₹4,200.
+- **Profit Comparison**: Regular Profit = ₹60,000. 25% Sale Net Profit = ₹53,550.
+- **Optimal Decision**: Reduce discount depth to **18% Off** to achieve maximum Net Profit of **₹64,200**.
 
 ---
 
@@ -281,18 +329,25 @@ Automatically detect pricing anomalies, market undercuts, and uncompetitive pric
 2. **Statistical Outlier Detection**: Computes Interquartile Range (IQR) bounds and Z-scores per SKU.
 3. **Price Index Calculation**: Measures store price relative to market average.
 
-#### Mathematical Formulation
-1. **Price Index ($PI$)**:
-   $$PI_i = \frac{P_{\text{our}, i}}{\bar{P}_{\text{competitors}, i}} \times 100$$
+#### Human-Readable Formulas
 
-2. **Z-Score Anomaly Criterion**:
-   $$Z_i = \frac{P_{\text{our}, i} - \mu_{\text{comp}, i}}{\sigma_{\text{comp}, i}}, \quad \text{Flagged if } |Z_i| > 2.0$$
+1. **Competitor Price Index**:
+   ```
+   Price Index = ( Our_Product_Price / Average_Competitor_Price ) * 100
+   ```
+   *Explanation: Price Index = 100 means exact market parity. Price Index = 120 means our price is 20% higher than competitors.*
+
+2. **Z-Score Outlier Flag**:
+   ```
+   Z-Score = ( Our_Price - Average_Competitor_Price ) / Standard_Deviation_of_Competitor_Prices
+   Flagged as Overpriced if Z-Score > 2.0
+   ```
 
 #### Concrete Numerical Example
-- **Product**: `P00044` (Athletic Running Shoes, Our Price = ₹4,500).
-- **Competitor Prices**: Store A = ₹3,600, Store B = ₹3,750, Store C = ₹3,650 ($\mu = ₹3,666$, $\sigma = ₹76$).
-- **Z-Score**: $Z = \frac{4500 - 3666}{76} = +10.97$ $\rightarrow$ **Severe Overprice Outlier**.
-- **Market Price Index**: $122.7$ (Our price is 22.7% above market average).
+- **Product**: `P00044` (Athletic Running Shoes | Our Price = ₹4,500).
+- **Competitor Prices**: Store A = ₹3,600 | Store B = ₹3,750 | Store C = ₹3,650 (Competitor Average = ₹3,666, Standard Deviation = ₹76).
+- **Z-Score Calculation**: (4500 - 3666) / 76 = **+10.97** $\rightarrow$ **High Overprice Alert**.
+- **Price Index**: **122.7** (We are 22.7% above market average).
 
 ---
 
@@ -311,19 +366,23 @@ Compute real-time inventory health scores across warehouses and stores, identify
 2. **Risk Factor Normalization**: Evaluates Stock-out Risk ($R_{\text{so}}$) and Overstock Holding Cost ($R_{\text{os}}$).
 3. **ABC/XYZ Matrix Assignment**: Classifies items by revenue (A/B/C) and demand volatility (X/Y/Z).
 
-#### Mathematical Formulation
-1. **Composite Health Risk Score ($S \in [0, 100]$)**:
-   $$S = 100 - \left( w_1 \cdot R_{\text{stockout}} + w_2 \cdot R_{\text{overstock}} + w_3 \cdot R_{\text{expiry}} \right) \times 100$$
-   Where $w_1 = 0.45$, $w_2 = 0.35$, $w_3 = 0.20$.
+#### Human-Readable Formulas
 
-2. **Days of Supply**:
-   $$\text{DoS} = \frac{I_{\text{on\_hand}}}{\max(\bar{D}_{\text{daily}}, 0.01)}$$
+1. **Days of Supply (DoS)**:
+   ```
+   Days of Supply = Current_Stock_Quantity / Average_Daily_Sales_Rate
+   ```
+
+2. **Composite Health Score (0 to 100)**:
+   ```
+   Health Score = 100 - [ (0.45 * Stockout_Risk) + (0.35 * Overstock_Risk) + (0.20 * Expiry_Risk) ] * 100
+   ```
 
 #### Concrete Numerical Example
-- **Item**: `P00088` (Current Stock = 12 units, Daily Demand = 4.0 units/day, Lead Time = 5 days).
-- **Days of Supply**: $\text{DoS} = 12 / 4.0 = 3.0 \text{ days}$.
-- **Stock-out Risk**: $R_{\text{stockout}} = 0.88$ (since DoS < Lead Time).
-- **Health Score**: $S = 100 - (0.45 \times 0.88 \times 100) = \mathbf{60.4 / 100}$ (**Critical Stock-out Warning**).
+- **Item**: `P00088` (Current Stock = 12 units | Daily Demand = 4.0 units/day | Supplier Lead Time = 5 days).
+- **Days of Supply**: 12 / 4.0 = **3.0 Days of Supply**.
+- **Stockout Risk**: Risk = **0.88** (High risk because 3 days supply is less than 5 days lead time).
+- **Health Score**: 100 - (0.45 * 0.88 * 100) = **60.4 / 100** (**Critical Stockout Warning**).
 
 ---
 
@@ -338,23 +397,31 @@ Automate purchase order generation using dynamic safety stock and Reorder Point 
 2. **Safety Stock Computation**: Applies service-level Z-factor ($Z = 1.65$ for 95% service level).
 3. **Reorder Point Trigger**: Evaluates if $\text{Stock On Hand} + \text{On Order} \le \text{ROP}$.
 
-#### Mathematical Formulation
-1. **Safety Stock Formula**:
-   $$\text{SS} = Z_{\alpha} \times \sqrt{\bar{L} \cdot \sigma_D^2 + \bar{D}^2 \cdot \sigma_L^2}$$
+#### Human-Readable Formulas
+
+1. **Dynamic Safety Stock**:
+   ```
+   Safety Stock = Service_Z_Factor * Sqrt( [ Average_Lead_Time * Demand_Variance^2 ] + [ Average_Daily_Demand^2 * Lead_Time_Variance^2 ] )
+   ```
+   *Explanation: Buffer stock protecting against unexpected spikes in customer demand OR supplier delivery delays.*
 
 2. **Reorder Point (ROP)**:
-   $$\text{ROP} = (\bar{D} \times \bar{L}) + \text{SS}$$
+   ```
+   Reorder Point = ( Average_Daily_Demand * Average_Lead_Time ) + Safety_Stock
+   ```
 
-3. **Order Quantity ($Q$) under $(s, S)$ Policy**:
-   $$Q = \begin{cases} S - (\text{Stock}_{\text{hand}} + \text{Stock}_{\text{transit}}), & \text{if } \text{Stock}_{\text{hand}} + \text{Stock}_{\text{transit}} \le \text{ROP} \\ 0, & \text{otherwise} \end{cases}$$
+3. **Reorder Execution**:
+   ```
+   If (Current_Stock + Stock_In_Transit) <= Reorder_Point:
+       Purchase_Order_Quantity = Target_Max_Stock - Current_Stock
+   ```
 
 #### Concrete Numerical Example
-- **Product**: `P00005`, Average Demand $\bar{D} = 25$ units/day ($\sigma_D = 4.2$), Lead Time $\bar{L} = 6$ days ($\sigma_L = 1.0$).
-- **Service Level**: 95% ($Z = 1.65$).
-- **Safety Stock**: $\text{SS} = 1.65 \times \sqrt{6 \times 4.2^2 + 25^2 \times 1.0^2} = 1.65 \times \sqrt{105.8 + 625} = 44.6 \approx 45 \text{ units}$.
-- **Reorder Point**: $\text{ROP} = (25 \times 6) + 45 = \mathbf{195 \text{ units}}$.
-- **Current Inventory**: 140 units on hand, 0 in transit.
-- **Action**: **Trigger Purchase Order for $Q = 300 - 140 = 160$ units**.
+- **Product**: `P00005` (Daily Sales = 25 units | Supplier Lead Time = 6 days | Service Level Target = 95%).
+- **Safety Stock Calculation**: Safety Stock = **45 units**.
+- **Reorder Point**: (25 * 6) + 45 = **195 units**.
+- **Current Inventory**: 140 units on hand (0 in transit).
+- **Action**: 140 <= 195 $\rightarrow$ **Trigger Purchase Order for 160 units**.
 
 ---
 
@@ -369,19 +436,25 @@ Optimize SKU location assignments inside warehouses to minimize picker travel di
 2. **Velocity Classification**: Ranks SKUs into Class A (Top 20% picks), Class B (Next 30%), and Class C (Remaining 50%).
 3. **Zone Mapping Optimization**: Slots Class A items to low-level racks closest to dispatch docks.
 
-#### Mathematical Formulation
-1. **Pick Velocity ($V_i$)**:
-   $$V_i = \sum_{o \in \text{Orders}} \text{Quantity}(i, o)$$
+#### Human-Readable Formulas
 
-2. **Total Picker Travel Distance Objective**:
-   $$\min \sum_{i \in \text{SKUs}} V_i \cdot d(\text{Slot}(i), \text{Dock})$$
-   Where $d(s, \text{Dock})$ is the Euclidean distance from warehouse slot $s$ to shipping dock.
+1. **Pick Velocity Rank**:
+   ```
+   Total Monthly Picks = Sum( Quantity Picked across all Orders )
+   Class A Items = Top 20% of items generating 80% of total pick frequency
+   ```
+
+2. **Picker Walking Distance Objective**:
+   ```
+   Total Monthly Walking Distance = Sum( Monthly_Picks * Distance_from_Slot_to_Packing_Dock )
+   Goal: Minimize Total Monthly Walking Distance
+   ```
 
 #### Concrete Numerical Example
 - **Warehouse**: `W002` (Stockholm Fulfillment Center).
-- **Class A Item**: `P00012` (High velocity, 1,420 picks/month). Current Slot: Zone C (Distance = 85 meters).
-- **Optimization Move**: Relocate `P00012` to **Zone A, Bay 02** (Distance = 12 meters).
-- **Result**: Saves **103.6 km** of picker walking distance per month (-72% pick time).
+- **High-Velocity Item**: `P00012` (Class A item, 1,420 picks/month). Current location: Zone C (85 meters from shipping dock).
+- **Optimized Slotting Assignment**: Move `P00012` to **Zone A, Bay 02** (12 meters from shipping dock).
+- **Result**: Saves **103.6 km** of picker walking distance every month (**72% reduction in pick travel time**).
 
 ---
 
@@ -396,19 +469,26 @@ Solve Vehicle Routing Problems with Time Windows (VRPTW) to deliver store orders
 2. **Initial Nearest-Neighbor Tour**: Generates a feasible starting route sequence.
 3. **2-Opt Local Search Improvement**: Iteratively swaps non-adjacent route edges to eliminate crossing paths until convergence.
 
-#### Mathematical Formulation
-1. **Haversine Geodesic Distance**:
-   $$d = 2 R \arcsin \left( \sqrt{\sin^2\left(\frac{\Delta \phi}{2}\right) + \cos(\phi_1) \cos(\phi_2) \sin^2\left(\frac{\Delta \lambda}{2}\right)} \right)$$
-   Where $R = 6,371 \text{ km}$.
+#### Human-Readable Formulas
 
-2. **2-Opt Edge Swap Condition**:
-   $$\text{Swap edge } (i, i+1) \text{ and } (j, j+1) \text{ if } d(i, j) + d(i+1, j+1) < d(i, i+1) + d(j, j+1)$$
+1. **Haversine GPS Distance between Points**:
+   ```
+   Latitude Difference = Lat2 - Lat1
+   Longitude Difference = Lon2 - Lon1
+   Distance (km) = 2 * Earth_Radius * Arcsin( Sqrt( Sin^2(LatDiff/2) + Cos(Lat1)*Cos(Lat2)*Sin^2(LonDiff/2) ) )
+   ```
+
+2. **2-Opt Edge Swap Optimization Rule**:
+   ```
+   Swap Route Segment if: Distance(Point_A to Point_C) + Distance(Point_B to Point_D) < Distance(Point_A to Point_B) + Distance(Point_C to Point_D)
+   ```
+   *Explanation: Uncrosses criss-crossing delivery routes to find the shortest loop.*
 
 #### Concrete Numerical Example
-- **Warehouse Depot**: `W002` (Stockholm). **Stores to Visit**: 7 retail locations.
-- **Initial Naive Route**: $W002 \rightarrow S_1 \rightarrow S_4 \rightarrow S_2 \rightarrow S_7 \rightarrow S_3 \rightarrow S_5 \rightarrow S_6 \rightarrow W002$ (Distance = 3,637 km).
-- **After 2-Opt Optimization**: $W002 \rightarrow S_1 \rightarrow S_2 \rightarrow S_3 \rightarrow S_4 \rightarrow S_5 \rightarrow S_6 \rightarrow S_7 \rightarrow W002$ (Distance = 3,361 km).
-- **Savings**: **276 km fuel reduction (-7.6% transport cost)**.
+- **Central Distribution Hub**: `W002` (Stockholm). **Stores to Visit**: 7 retail locations.
+- **Unoptimized Route**: Hub $\rightarrow S_1 \rightarrow S_4 \rightarrow S_2 \rightarrow S_7 \rightarrow S_3 \rightarrow S_5 \rightarrow S_6 \rightarrow$ Hub (Total = 3,637 km).
+- **2-Opt Optimized Route**: Hub $\rightarrow S_1 \rightarrow S_2 \rightarrow S_3 \rightarrow S_4 \rightarrow S_5 \rightarrow S_6 \rightarrow S_7 \rightarrow$ Hub (Total = 3,361 km).
+- **Fuel & Distance Saved**: **276 km saved per delivery run (-7.6% transport cost)**.
 
 ---
 
@@ -427,15 +507,18 @@ Provide instant automated responses for customer inquiries (order tracking, retu
 2. **Database State Lookup**: Queries `orders` and `shipments` tables.
 3. **LLM Context Synthesis**: Constructs natural conversational answers.
 
-#### Mathematical Formulation
-1. **Intent Softmax Probability**:
-   $$P(\text{Intent} = k \mid \mathbf{x}) = \frac{e^{\mathbf{w}_k \cdot \mathbf{x}}}{\sum_{j} e^{\mathbf{w}_j \cdot \mathbf{x}}}$$
+#### Human-Readable Formulas
+
+1. **Intent Classification Match Score**:
+   ```
+   Match Confidence = Highest Probability Score among (Order Tracking, Return Policy, Store Hours, Product Info)
+   ```
 
 #### Concrete Numerical Example
-- **User Query**: `"Where is my order ORD99281?"`
-- **Extracted Entity**: `ORD99281`, Intent = `order_status`.
-- **Database Lookup**: Order `ORD99281` shipped via Express Logistics, tracking `#TRK8821`, expected delivery tomorrow by 4 PM.
-- **Bot Answer**: *"Your order #ORD99281 has been shipped and is out for delivery! Expected arrival tomorrow by 4:00 PM (Tracking #TRK8821)."*
+- **Customer Query**: `"Where is my order ORD99281?"`
+- **Extracted Entity**: Order ID = `ORD99281` | Intent = `order_status`.
+- **Database Query Result**: Order `ORD99281` shipped via Express Courier (Tracking #TRK8821, Delivery expected tomorrow by 4:00 PM).
+- **Bot Response**: *"Your order #ORD99281 is on its way via Express Courier (Tracking #TRK8821) and is scheduled for delivery tomorrow by 4:00 PM!"*
 
 ---
 
@@ -450,15 +533,18 @@ Automatically categorize, assess urgency, and route incoming customer support ti
 2. **Sentiment & Urgency Scoring**: Computes urgency score based on sentiment polarity and priority keyword presence (*damaged*, *refund*, *missing*).
 3. **Department Routing Rules**: Routes ticket to Logistics, Billing, Quality, or General Support.
 
-#### Mathematical Formulation
-1. **Urgency Score ($U \in [0, 1]$)**:
-   $$U = \text{clip}\left( 0.4 \cdot (1 - \text{Sentiment}) + 0.3 \cdot \mathbb{I}_{\text{UrgentKeywords}} + 0.3 \cdot \mathbb{I}_{\text{HighVIP}}, \, 0, \, 1 \right)$$
+#### Human-Readable Formulas
+
+1. **Ticket Urgency Score (0.0 to 1.0)**:
+   ```
+   Urgency Score = ( 0.40 * Negative_Sentiment_Weight ) + ( 0.30 * Urgent_Keyword_Present ) + ( 0.30 * VIP_Customer_Flag )
+   ```
 
 #### Concrete Numerical Example
-- **Ticket**: `"Parcel arrived damaged, box torn and jacket missing. Want immediate refund!"`
-- **Sentiment Score**: $-0.85$ (Negative). **Keyword Flags**: `damaged`, `missing`, `refund`.
-- **Urgency Score**: $0.4 \times (1 - (-0.85)) + 0.3 \times 1.0 = \mathbf{0.94}$ $\rightarrow$ **HIGH Priority**.
-- **Assigned Queue**: `Logistics & Claims Tier-2`.
+- **Support Ticket**: `"Parcel arrived damaged, box torn and jacket missing. Want immediate refund!"`
+- **Sentiment**: Negative (-0.85). **Keywords Detected**: `damaged`, `missing`, `refund`.
+- **Urgency Score**: (0.40 * 0.85) + (0.30 * 1.0) + (0.30 * 1.0) = **0.94 / 1.0** $\rightarrow$ **HIGH Priority Alert**.
+- **Routing Assignment**: **Logistics & Claims Escalation Queue**.
 
 ---
 
@@ -473,14 +559,18 @@ Assist live human support agents during active calls by retrieving relevant SOP 
 2. **BM25 & Cosine Similarity SOP Search**: Retrieves top policy guidelines from standard operating procedure knowledge base.
 3. **Response Template Auto-Fill**: Fills policy variables into ready-to-send agent response templates.
 
-#### Mathematical Formulation
-1. **BM25 Retrieval Score**:
-   $$\text{Score}_{\text{BM25}}(q, d) = \sum_{i=1}^{n} \text{IDF}(q_i) \cdot \frac{f(q_i, d) \cdot (k_1 + 1)}{f(q_i, d) + k_1 \cdot \left(1 - b + b \cdot \frac{|d|}{\text{avgdl}}\right)}$$
+#### Human-Readable Formulas
+
+1. **BM25 Document Retrieval Relevance**:
+   ```
+   Relevance Score = Sum( Word_Rarity * [ Word_Frequency_in_Policy / ( Word_Frequency + Scaling_Factor ) ] )
+   ```
+   *Explanation: Ranks SOP policy documents by how specifically they address the customer's problem.*
 
 #### Concrete Numerical Example
-- **Customer Query**: `"What is your return policy for worn footwear?"`
-- **SOP Search Result**: Section 4.2 - *Footwear Return Guidelines* (BM25 Score = 14.8).
-- **Suggested Response to Agent**: *"Footwear can be returned within 30 days of purchase provided soles show no outdoor wear. Original box required."*
+- **Customer Question**: `"What is your return policy for worn footwear?"`
+- **Top SOP Search Result**: Section 4.2 — *Footwear Return Guidelines* (Relevance Score = 14.8).
+- **Suggested Response to Support Agent**: *"Footwear can be returned within 30 days of purchase provided soles show no outdoor wear. Original box required."*
 
 ---
 
@@ -495,28 +585,31 @@ Mine thousands of customer product reviews to extract aspect-level sentiment (Fi
 2. **Aspect-Level Sentiment Scoring**: Computes VADER sentiment compound score for sentences mentioning specific aspects.
 3. **Aspect Aggregation Matrix**: Aggregates positive, neutral, and negative sentiment ratios per aspect across all reviews.
 
-#### Mathematical Formulation
-1. **Aspect Polarity Ratio ($P_a$)**:
-   $$P_a = \frac{N_{\text{pos}}(a) - N_{\text{neg}}(a)}{N_{\text{pos}}(a) + N_{\text{neg}}(a) + N_{\text{neu}}(a)}$$
+#### Human-Readable Formulas
+
+1. **Aspect Net Sentiment Polarity**:
+   ```
+   Net Aspect Score = ( Positive_Mentions - Negative_Mentions ) / Total_Mentions_for_Aspect
+   ```
 
 #### Concrete Numerical Example
-- **Dataset**: 1,250 product reviews for `Dresses` category.
-- **Aspect 'Fit'**: 420 positive mentions, 80 negative mentions $\rightarrow P_{\text{fit}} = +0.68$ (Positive).
-- **Aspect 'Zipper'**: 30 positive mentions, 190 negative mentions $\rightarrow P_{\text{zipper}} = -0.73$ (Negative Quality Alert!).
-- **Actionable Insight**: Alert product manufacturing team to replace zipper supplier for dress line.
+- **Dataset Evaluated**: 1,250 reviews for the `Dresses` category.
+- **Aspect 'Fit'**: 420 positive mentions | 80 negative mentions $\rightarrow$ Net Score = **+0.68** (Positive).
+- **Aspect 'Zipper'**: 30 positive mentions | 190 negative mentions $\rightarrow$ Net Score = **-0.73** (**Negative Quality Issue**).
+- **Actionable Insight**: Send quality defect alert to manufacturing team to upgrade zipper supplier on dress line.
 
 ---
 
-## 🔬 Testing & Empirical Verification Results
+## 🔬 Automated Testing & Empirical Verification
 
-All 16 Python backend capability modules are validated via `pytest` automated test suites (`tests/test_capabilities.py`).
+All 16 Python backend capability modules are verified using `pytest` automated test suites ([`tests/test_capabilities.py`](file:///c:/Users/ritik.gupta/Desktop/CalRetail/tests/test_capabilities.py)).
 
-### Verification Test Command:
+### Automated Test Command:
 ```powershell
 myenv\Scripts\python.exe -m pytest tests/test_capabilities.py
 ```
 
-### Execution Output:
+### Verification Result:
 ```
 ============================= test session starts =============================
 platform win32 -- Python 3.14.3, pytest-9.1.1
@@ -526,5 +619,5 @@ tests\test_capabilities.py ................................              [100%]
 
 ======================= 32 passed, 1 warning in 29.07s ========================
 ```
-- **32 / 32 capability test cases passed cleanly in 29 seconds!**
-- All 16 backend capabilities returned non-null, data-dense responses with sub-second response times.
+- **32 / 32 test cases passed cleanly in 29 seconds!**
+- All 16 backend capability modules execute lazily, build state on-demand, and return structured, data-dense answers without relying on notebooks or CSV files.

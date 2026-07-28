@@ -1115,7 +1115,17 @@ html[data-theme="dark"] .skeleton-shimmer {
     rgba(63, 102, 82, 0.45) 50%,
     rgba(32, 48, 38, 0.35) 75%
   );
-  background-size: 200% 100%;
+/* Page loading container */
+.dash-page-loading {
+  min-height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
 }
+
+._dash-loading-callback {
+  margin: 60px auto !important;
+  display: block !important;
+}
+
 
 

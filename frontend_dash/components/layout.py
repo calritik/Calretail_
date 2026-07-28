@@ -94,8 +94,22 @@ def module_page(eyebrow: str, title: str, subtitle: str, children):
     )
 
 
+from frontend_dash.theme import colors
+
 def app_shell(active_path: str, content):
     return html.Div(
-        [html.Main(content, className="main-col"), sidebar(active_path)],
+        [
+            html.Main(
+                dcc.Loading(
+                    content,
+                    type="dot",
+                    color=colors.BRAND,
+                    className="dash-page-loading",
+                ),
+                className="main-col",
+            ),
+            sidebar(active_path),
+        ],
         className="app-shell",
     )
+

@@ -1193,6 +1193,44 @@ html[data-theme="dark"] .skeleton-shimmer {
 }
 
 /* Dash Native Loading Overlays & Transitions */
+[data-dash-is-loading="true"] {
+  position: relative !important;
+  min-height: 100px;
+}
+
+[data-dash-is-loading="true"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(247, 246, 239, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  border-radius: 12px;
+  animation: titleIn 0.2s var(--ease-out) both;
+}
+
+html[data-theme="dark"] [data-dash-is-loading="true"]::before {
+  background: rgba(15, 25, 19, 0.75);
+}
+
+[data-dash-is-loading="true"]::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 38px;
+  height: 38px;
+  margin-top: -19px;
+  margin-left: -19px;
+  border: 3.5px solid transparent;
+  border-top-color: var(--brand);
+  border-right-color: var(--brand2);
+  border-bottom-color: var(--navy);
+  border-radius: 50%;
+  animation: dashSpinner 0.75s linear infinite;
+  z-index: 51;
+}
+
 ._dash-loading {
   position: relative;
   opacity: 0.65;

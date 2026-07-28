@@ -67,15 +67,21 @@ def _compact(n) -> str:
 # 1 — Estate headline
 # ══════════════════════════════════════════════════════════════════════════════
 
-@callback(Output("hm-estate", "children"), Input("hm-load", "data"))
+@callback(
+    Output("hm-estate", "children"),
+    Output("hm-banner", "children"),
+    Input("hm-load", "data")
+)
 def _estate(_):
     d = api_get("/api/v1/overview/estate")
     if not d:
-        return C.empty("Estate figures unavailable — is the backend running?")
+        if not backend_is_up():
+            return C.empty("Estate figures unavailable — is the backend running?"), [C.offline_banner()]
+        return C.empty("Estate figures unavailable — retrying..."), []
     if not d.get("transactions"):
-        return C.empty("No transactions recorded.")
+        return C.empty("No transactions recorded."), []
 
-    return [
+    kpis = [
         C.kpi_grid([
             C.kpi("Revenue", _inr(d["revenue"]),
                   f"{d['period_start'][:4]}–{d['period_end'][:4]}"),
@@ -97,6 +103,9 @@ def _estate(_):
             className="small muted mt-14",
         ),
     ]
+    # Return cards and empty list for banner (NO banner when data loaded!)
+    return kpis, []
+
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -283,15 +292,13 @@ def _domain_card(d):
 
 
 def layout():
-    up = backend_is_up()
-    banner = [] if up else [C.offline_banner()]
-
     return module_page(
         "Executive Overview",
         "Retail AI Capability Console",
         "The trading position the sixteen AI capabilities operate on — revenue, "
         "margin, and seasonality, aggregated live from the transaction log.",
-        banner + [
+        [
+            html.Div(id="hm-banner"),
             # Fires once on mount; the unfiltered panels load from it in
             # parallel so the page paints before any rollup has finished.
             dcc.Store(id="hm-load", data=1),
